@@ -165,3 +165,78 @@ export function parseSuggestedActions(content: string): {
 
   return { cleanContent, actions };
 }
+
+/**
+ * HP/Resource effect interface
+ */
+export interface CharacterEffect {
+  type: 'damage' | 'heal' | 'spend_resource' | 'restore_resource';
+  amount: number;
+  resourceName?: string; // For resource effects
+}
+
+/**
+ * Parse character effects from AI response
+ * Extracts HP damage/healing and resource management tags
+ *
+ * Supported tags:
+ * - <damage>X</damage> - Apply X damage to character
+ * - <heal>X</heal> - Restore X HP to character
+ * - <spend_resource name="Sanity">X</spend_resource> - Spend X of resource
+ * - <restore_resource name="Magic Points">X</restore_resource> - Restore X of resource
+ */
+export function parseCharacterEffects(content: string): {
+  cleanContent: string;
+  effects: CharacterEffect[];
+} {
+  const effects: CharacterEffect[] = [];
+  let cleanContent = content;
+
+  // Parse <damage>X</damage>
+  const damageRegex = /<damage>(\d+)<\/damage>/gi;
+  let damageMatch;
+  while ((damageMatch = damageRegex.exec(content)) !== null) {
+    effects.push({
+      type: 'damage',
+      amount: parseInt(damageMatch[1], 10),
+    });
+  }
+  cleanContent = cleanContent.replace(damageRegex, '').trim();
+
+  // Parse <heal>X</heal>
+  const healRegex = /<heal>(\d+)<\/heal>/gi;
+  let healMatch;
+  while ((healMatch = healRegex.exec(content)) !== null) {
+    effects.push({
+      type: 'heal',
+      amount: parseInt(healMatch[1], 10),
+    });
+  }
+  cleanContent = cleanContent.replace(healRegex, '').trim();
+
+  // Parse <spend_resource name="ResourceName">X</spend_resource>
+  const spendResourceRegex = /<spend_resource\s+name="([^"]+)">(\d+)<\/spend_resource>/gi;
+  let spendMatch;
+  while ((spendMatch = spendResourceRegex.exec(content)) !== null) {
+    effects.push({
+      type: 'spend_resource',
+      amount: -parseInt(spendMatch[2], 10), // Negative for spending
+      resourceName: spendMatch[1],
+    });
+  }
+  cleanContent = cleanContent.replace(spendResourceRegex, '').trim();
+
+  // Parse <restore_resource name="ResourceName">X</restore_resource>
+  const restoreResourceRegex = /<restore_resource\s+name="([^"]+)">(\d+)<\/restore_resource>/gi;
+  let restoreMatch;
+  while ((restoreMatch = restoreResourceRegex.exec(content)) !== null) {
+    effects.push({
+      type: 'restore_resource',
+      amount: parseInt(restoreMatch[2], 10),
+      resourceName: restoreMatch[1],
+    });
+  }
+  cleanContent = cleanContent.replace(restoreResourceRegex, '').trim();
+
+  return { cleanContent, effects };
+}

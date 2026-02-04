@@ -1,7 +1,7 @@
 import { getClaudeClient } from '../ai/claude-client';
 import { getGeminiClient } from '../ai/gemini-client';
 import { buildSystemPrompt } from '../ai/prompt-builder';
-import { assembleContext, parseRollRequest, parseSuggestedActions, parseXPAward } from '../ai/context-assembler';
+import { assembleContext, parseRollRequest, parseSuggestedActions, parseXPAward, parseCharacterEffects, type CharacterEffect } from '../ai/context-assembler';
 import { getAIProvider } from '../storage/api-key-storage';
 import type { Campaign, Message, Entity, Fact, Recap, SuggestedAction, Character } from '../../types/models';
 import type { ClaudeMessage } from '../../types/api';
@@ -20,6 +20,7 @@ export interface AIResponse {
   rollRequest: string | null;
   suggestedActions: SuggestedAction[];
   xpAward: number | null;
+  characterEffects: CharacterEffect[];
 }
 
 /**
@@ -76,8 +77,11 @@ export class GameEngine {
     // Parse XP award first
     const { cleanContent: contentAfterXP, xpAmount } = parseXPAward(rawContent);
 
+    // Parse character effects (HP damage/healing, resource spending/restoration)
+    const { cleanContent: contentAfterEffects, effects } = parseCharacterEffects(contentAfterXP);
+
     // Parse suggested actions
-    const { cleanContent, actions } = parseSuggestedActions(contentAfterXP);
+    const { cleanContent, actions } = parseSuggestedActions(contentAfterEffects);
 
     // Check if AI is requesting a roll
     const rollRequest = parseRollRequest(cleanContent);
@@ -87,6 +91,7 @@ export class GameEngine {
       rollRequest,
       suggestedActions: actions,
       xpAward: xpAmount,
+      characterEffects: effects,
     };
   }
 
@@ -143,8 +148,11 @@ Then present the new situation and ask "What do you do?"`;
     // Parse XP award first
     const { cleanContent: contentAfterXP, xpAmount } = parseXPAward(rawContent);
 
+    // Parse character effects (HP damage/healing, resource spending/restoration)
+    const { cleanContent: contentAfterEffects, effects } = parseCharacterEffects(contentAfterXP);
+
     // Parse suggested actions
-    const { cleanContent, actions } = parseSuggestedActions(contentAfterXP);
+    const { cleanContent, actions } = parseSuggestedActions(contentAfterEffects);
 
     // Check if AI is requesting another roll
     const rollRequest = parseRollRequest(cleanContent);
@@ -154,6 +162,7 @@ Then present the new situation and ask "What do you do?"`;
       rollRequest,
       suggestedActions: actions,
       xpAward: xpAmount,
+      characterEffects: effects,
     };
   }
 }

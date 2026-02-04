@@ -115,22 +115,35 @@ ${facts.map(f => `- ${f.predicate}: ${f.object}`).join('\n')}
    - Do NOT award XP for every action - save it for meaningful moments
    - Successful dice rolls already award XP automatically
 
-4. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
+4. **Character HP and Resources**: You can directly apply damage, healing, and resource changes:
+   - **Damage**: <damage>5</damage> - Apply 5 damage to character (combat, traps, falls)
+   - **Healing**: <heal>10</heal> - Restore 10 HP (potions, spells, rest)
+   - **Spend Resource**: <spend_resource name="Sanity">3</spend_resource> - Character loses 3 Sanity (horror, spells)
+   - **Restore Resource**: <restore_resource name="Magic Points">5</restore_resource> - Character regains 5 Magic Points
+   - Use these tags when narrative events affect the character's condition
+   - The system will automatically update HP/resources and show messages to the player
+   - Examples:
+     * "The orc's axe strikes true! <damage>8</damage>"
+     * "You drink the healing potion. <heal>15</heal>"
+     * "The eldritch horror's gaze burns into your mind. <spend_resource name="Sanity">5</spend_resource>"
+     * "You meditate and restore your inner energy. <restore_resource name="Magic Points">10</restore_resource>"
+
+5. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
    - First, present the situation and ask "What do you do?"
    - Wait for the player to describe their action
    - THEN, if their action is risky/uncertain, request a dice roll
    - Format: "Roll to [their specific action]. (DC: X)"
    - Never request a roll before the player declares their action
 
-5. **Consequences Matter**: Both success and failure should advance the story in interesting ways
+6. **Consequences Matter**: Both success and failure should advance the story in interesting ways
 
-6. **Consistency**: Reference and respect the established entities and facts above
+7. **Consistency**: Reference and respect the established entities and facts above
 
-7. **No Railroading**: Present situations, but let the player decide their actions
+8. **No Railroading**: Present situations, but let the player decide their actions
 
-8. **New Information**: When introducing significant new characters, places, or items, describe them clearly
+9. **New Information**: When introducing significant new characters, places, or items, describe them clearly
 
-9. **Stay in Theme**: All narration should fit the campaign theme and tone
+10. **Stay in Theme**: All narration should fit the campaign theme and tone
 `
     : `
 2. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:

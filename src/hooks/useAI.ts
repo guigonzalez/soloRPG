@@ -10,6 +10,8 @@ import * as rollRepo from '../services/storage/roll-repo';
 import { isValidDiceNotation } from '../services/dice/dice-parser';
 import { rollDice } from '../services/dice/dice-roller';
 import { calculateRollXP } from '../services/game/experience-calculator';
+import { t } from '../services/i18n/use-i18n';
+import type { CharacterEffect } from '../services/ai/context-assembler';
 import type { NewMessage } from '../types/models';
 
 /**
@@ -19,6 +21,89 @@ export function useAI(campaignId: string | null) {
   const { messages, addMessage, setAIResponding, setStreamedContent, appendStreamedContent, setError, setPendingRoll, setSuggestedActions } = useChatStore();
   const { getActiveCampaign } = useCampaignStore();
   const gameEngine = getGameEngine();
+
+  /**
+   * Apply character effects (HP damage/healing, resource spending/restoration)
+   */
+  const applyCharacterEffects = async (effects: CharacterEffect[], campaignId: string) => {
+    const characterStore = useCharacterStore.getState();
+
+    for (const effect of effects) {
+      try {
+        switch (effect.type) {
+          case 'damage': {
+            await characterStore.takeDamage(effect.amount);
+
+            // Show damage message in chat
+            const damageMessage: NewMessage = {
+              campaignId,
+              role: 'system',
+              content: t('combat.takeDamage', { amount: effect.amount.toString() }),
+            };
+            const savedDamageMessage = await messageRepo.createMessage(damageMessage);
+            addMessage(savedDamageMessage);
+            break;
+          }
+
+          case 'heal': {
+            await characterStore.heal(effect.amount);
+
+            // Show heal message in chat
+            const healMessage: NewMessage = {
+              campaignId,
+              role: 'system',
+              content: t('combat.recover', { amount: effect.amount.toString() }),
+            };
+            const savedHealMessage = await messageRepo.createMessage(healMessage);
+            addMessage(savedHealMessage);
+            break;
+          }
+
+          case 'spend_resource': {
+            if (effect.resourceName) {
+              await characterStore.updateResource(effect.resourceName, effect.amount);
+
+              // Show resource spent message in chat
+              const spendMessage: NewMessage = {
+                campaignId,
+                role: 'system',
+                content: t('combat.resourceSpent', {
+                  resource: effect.resourceName,
+                  amount: effect.amount.toString(),
+                  spent: Math.abs(effect.amount).toString()
+                }),
+              };
+              const savedSpendMessage = await messageRepo.createMessage(spendMessage);
+              addMessage(savedSpendMessage);
+            }
+            break;
+          }
+
+          case 'restore_resource': {
+            if (effect.resourceName) {
+              await characterStore.restoreResource(effect.resourceName, effect.amount);
+
+              // Show resource restored message in chat
+              const restoreMessage: NewMessage = {
+                campaignId,
+                role: 'system',
+                content: t('combat.resourceRestored', {
+                  resource: effect.resourceName,
+                  amount: effect.amount.toString()
+                }),
+              };
+              const savedRestoreMessage = await messageRepo.createMessage(restoreMessage);
+              addMessage(savedRestoreMessage);
+            }
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to apply character effect:', effect, error);
+        // Don't throw - continue applying other effects
+      }
+    }
+  };
 
   /**
    * Send message or automatically roll dice if input is dice notation
@@ -197,6 +282,11 @@ export function useAI(campaignId: string | null) {
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
 
+      // Handle character effects (HP damage/healing, resource spending/restoration)
+      if (response.characterEffects && response.characterEffects.length > 0) {
+        await applyCharacterEffects(response.characterEffects, campaignId);
+      }
+
       setAIResponding(false);
       setStreamedContent('');
 
@@ -277,6 +367,11 @@ export function useAI(campaignId: string | null) {
 
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
+
+      // Handle character effects (HP damage/healing, resource spending/restoration)
+      if (response.characterEffects && response.characterEffects.length > 0) {
+        await applyCharacterEffects(response.characterEffects, campaignId);
+      }
 
       // Handle XP award from AI (story progression, milestones, etc.)
       if (response.xpAward) {
@@ -374,6 +469,11 @@ export function useAI(campaignId: string | null) {
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
 
+      // Handle character effects (HP damage/healing, resource spending/restoration)
+      if (response.characterEffects && response.characterEffects.length > 0) {
+        await applyCharacterEffects(response.characterEffects, campaignId);
+      }
+
       // Handle XP award from AI (story progression, milestones, etc.)
       if (response.xpAward) {
         const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
@@ -468,6 +568,11 @@ export function useAI(campaignId: string | null) {
 
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
+
+      // Handle character effects (HP damage/healing, resource spending/restoration)
+      if (response.characterEffects && response.characterEffects.length > 0) {
+        await applyCharacterEffects(response.characterEffects, campaignId);
+      }
 
       // Handle XP award from AI (story progression, milestones, etc.)
       if (response.xpAward) {

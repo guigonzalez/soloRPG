@@ -148,6 +148,14 @@ export interface Translations {
     youAreNowLevel: string;
   };
 
+  // HP and Resources
+  combat: {
+    takeDamage: string;
+    recover: string;
+    resourceSpent: string;
+    resourceRestored: string;
+  };
+
   // Settings
   settings: {
     title: string;
@@ -309,6 +317,13 @@ export const translations: Record<Language, Translations> = {
       youAreNowLevel: 'You are now Level {level}',
     },
 
+    combat: {
+      takeDamage: '💥 You take {amount} damage!',
+      recover: '💚 You recover {amount} HP!',
+      resourceSpent: '🔵 {resource} {amount} ({spent} spent)',
+      resourceRestored: '🔵 {resource} +{amount} restored!',
+    },
+
     settings: {
       title: 'Settings',
       language: 'Language',
@@ -467,6 +482,13 @@ export const translations: Record<Language, Translations> = {
       youAreNowLevel: 'Você agora é Nível {level}',
     },
 
+    combat: {
+      takeDamage: '💥 Você sofreu {amount} de dano!',
+      recover: '💚 Você recuperou {amount} de HP!',
+      resourceSpent: '🔵 {resource} {amount} ({spent} gasto)',
+      resourceRestored: '🔵 {resource} +{amount} restaurado!',
+    },
+
     settings: {
       title: 'Configurações',
       language: 'Idioma',
@@ -623,6 +645,13 @@ export const translations: Record<Language, Translations> = {
       storyProgression: 'Progreso de la historia',
       levelUp: '¡SUBISTE DE NIVEL! ¡Ahora eres Nivel {level}!',
       youAreNowLevel: 'Ahora eres Nivel {level}',
+    },
+
+    combat: {
+      takeDamage: '💥 ¡Recibes {amount} de daño!',
+      recover: '💚 ¡Recuperas {amount} de HP!',
+      resourceSpent: '🔵 {resource} {amount} ({spent} gastado)',
+      resourceRestored: '🔵 ¡{resource} +{amount} restaurado!',
     },
 
     settings: {
