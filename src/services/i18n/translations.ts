@@ -74,6 +74,7 @@ export interface Translations {
   characterPanel: {
     level: string;
     experience: string;
+    hitPoints: string;
     attributes: string;
     maxLevel: string;
   };
@@ -240,6 +241,7 @@ export const translations: Record<Language, Translations> = {
     characterPanel: {
       level: 'Level',
       experience: 'Experience',
+      hitPoints: 'Hit Points',
       attributes: 'Attributes',
       maxLevel: 'MAX',
     },
@@ -397,6 +399,7 @@ export const translations: Record<Language, Translations> = {
     characterPanel: {
       level: 'Nível',
       experience: 'Experiência',
+      hitPoints: 'Pontos de Vida',
       attributes: 'Atributos',
       maxLevel: 'MÁX',
     },
@@ -554,6 +557,7 @@ export const translations: Record<Language, Translations> = {
     characterPanel: {
       level: 'Nivel',
       experience: 'Experiencia',
+      hitPoints: 'Puntos de Vida',
       attributes: 'Atributos',
       maxLevel: 'MÁX',
     },

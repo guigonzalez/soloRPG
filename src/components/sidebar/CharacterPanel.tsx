@@ -75,6 +75,91 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
         </div>
       </div>
 
+      {/* Hit Points */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+        }}>
+          <span style={{ fontSize: '10px', color: '#ff6b6b' }}>
+            {t('characterPanel.hitPoints')}
+          </span>
+          <span style={{ fontSize: '10px', color: '#c92a2a' }}>
+            {character.hitPoints} / {character.maxHitPoints}
+          </span>
+        </div>
+        <div style={{
+          height: '12px',
+          backgroundColor: '#0f380f',
+          border: '2px solid #ff6b6b',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${((character.hitPoints / character.maxHitPoints) * 100).toFixed(0)}%`,
+            backgroundColor: character.hitPoints <= character.maxHitPoints * 0.25
+              ? '#c92a2a' // Critical HP - darker red
+              : character.hitPoints <= character.maxHitPoints * 0.5
+              ? '#ff6b6b' // Low HP - orange-red
+              : '#fa5252', // Healthy HP - bright red
+            transition: 'width 0.3s ease, background-color 0.3s ease',
+          }} />
+        </div>
+      </div>
+
+      {/* System-specific Resources (Sanity, Magic Points, Blood Points, etc.) */}
+      {template.resources && character.resources && character.maxResources && (
+        <div style={{ marginBottom: '16px' }}>
+          {template.resources.map((resourceDef) => {
+            const currentValue = character.resources![resourceDef.name] || 0;
+            const maxValue = character.maxResources![resourceDef.name] || 0;
+            const percentage = maxValue > 0 ? ((currentValue / maxValue) * 100).toFixed(0) : '0';
+            const barColor = resourceDef.color || '#9370db';
+
+            return (
+              <div key={resourceDef.name} style={{ marginBottom: '12px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px',
+                }}>
+                  <span style={{ fontSize: '10px', color: barColor }}>
+                    {resourceDef.displayName}
+                  </span>
+                  <span style={{ fontSize: '10px', opacity: 0.7 }}>
+                    {currentValue} / {maxValue}
+                  </span>
+                </div>
+                <div style={{
+                  height: '10px',
+                  backgroundColor: '#0f380f',
+                  border: `2px solid ${barColor}`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: `${percentage}%`,
+                    backgroundColor: barColor,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Attributes */}
       <div>
         <h4 style={{
