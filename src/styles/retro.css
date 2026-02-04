@@ -1,0 +1,240 @@
+/**
+ * 8-bit Retro Styling for SoloRPG
+ */
+
+:root {
+  /* 8-bit Green Theme (Default) */
+  --color-bg-primary: #0f380f;
+  --color-bg-secondary: #306230;
+  --color-bg-tertiary: #0f380f;
+  --color-text-primary: #9bbc0f;
+  --color-text-secondary: #8bac0f;
+  --color-border: #8bac0f;
+  --color-accent: #9bbc0f;
+  --color-shadow: #0f380f;
+
+  /* UI Colors */
+  --color-user-message: #306230;
+  --color-ai-message: #0f380f;
+  --color-system-message: #8bac0f20;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border */
+  --border-width: 2px;
+  --border-radius: 0px; /* Retro = sharp corners */
+
+  /* Font */
+  --font-family: 'Courier New', 'Courier', monospace;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+
+  /* Shadows (pixelated effect) */
+  --shadow-sm: 2px 2px 0 var(--color-shadow);
+  --shadow-md: 4px 4px 0 var(--color-shadow);
+  --shadow-lg: 6px 6px 0 var(--color-shadow);
+}
+
+/* 8-bit Amber Theme */
+[data-theme="8bit-amber"] {
+  --color-bg-primary: #2b1d0e;
+  --color-bg-secondary: #5c4a2f;
+  --color-bg-tertiary: #2b1d0e;
+  --color-text-primary: #ffb000;
+  --color-text-secondary: #ffa000;
+  --color-border: #ffa000;
+  --color-accent: #ffb000;
+  --color-shadow: #1a1106;
+  --color-user-message: #5c4a2f;
+  --color-ai-message: #2b1d0e;
+}
+
+/* Classic Theme (Black & White) */
+[data-theme="classic"] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #0a0a0a;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cccccc;
+  --color-border: #ffffff;
+  --color-accent: #ffffff;
+  --color-shadow: #000000;
+  --color-user-message: #1a1a1a;
+  --color-ai-message: #000000;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Pixelated images */
+img {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Scrollbar styling (retro) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border: var(--border-width) solid var(--color-border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border: var(--border-width) solid var(--color-border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-primary);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+/* Focus outline (pixelated) */
+:focus-visible {
+  outline: var(--border-width) dashed var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Retro Button */
+.retro-button {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: none;
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.retro-button:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  color: var(--color-bg-primary);
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.retro-button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.retro-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Retro Input */
+.retro-input {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  width: 100%;
+}
+
+.retro-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.retro-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: inset var(--shadow-sm);
+}
+
+/* Retro Card */
+.retro-card {
+  background-color: var(--color-bg-secondary);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+}
+
+.retro-card-title {
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Retro Container */
+.retro-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+/* Pixelated border animation (for loading) */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s step-start infinite;
+}
+
+/* Scanline effect (optional, subtle) */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 1;
+}
