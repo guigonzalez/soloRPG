@@ -4,7 +4,7 @@ import { ChatInput } from './ChatInput';
 import { DiceRoll } from './DiceRoll';
 import { Loading } from '../common/Loading';
 import { t } from '../../services/i18n/use-i18n';
-import type { Message, Roll, SuggestedAction } from '../../types/models';
+import type { Message, Roll, SuggestedAction, Character } from '../../types/models';
 
 interface ChatContainerProps {
   messages: Message[];
@@ -14,6 +14,9 @@ interface ChatContainerProps {
   streamedContent?: string;
   suggestedActions?: SuggestedAction[];
   onSelectAction?: (action: SuggestedAction) => void;
+  character?: Character | null;
+  campaignSystem?: string;
+  onAttributeRoll?: (rollNotation: string, dc?: number) => void;
 }
 
 /**
@@ -36,6 +39,9 @@ export function ChatContainer({
   streamedContent = '',
   suggestedActions = [],
   onSelectAction,
+  character,
+  campaignSystem,
+  onAttributeRoll,
 }: ChatContainerProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const merged = mergeMessagesAndRolls(messages, rolls);
@@ -85,6 +91,9 @@ export function ChatContainer({
               suggestedActions={showActions ? suggestedActions : undefined}
               onSelectAction={onSelectAction}
               actionsDisabled={isAIResponding}
+              character={character}
+              campaignSystem={campaignSystem}
+              onAttributeRoll={onAttributeRoll}
             />
           );
         })}

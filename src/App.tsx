@@ -228,6 +228,11 @@ function App() {
     }
   };
 
+  const handleAttributeRoll = async (rollNotation: string, dc?: number) => {
+    // When rolling from inline attribute suggestion, use empty action text
+    await sendActionWithRoll('', rollNotation, dc);
+  };
+
   const handleCharacterCreation = async (name: string, attributes: Record<string, number>) => {
     try {
       await handleCreateCharacter(name, attributes);
@@ -351,6 +356,9 @@ function App() {
           streamedContent={streamedContent}
           suggestedActions={suggestedActions}
           onSelectAction={handleSelectAction}
+          character={_character}
+          campaignSystem={activeCampaign.system}
+          onAttributeRoll={handleAttributeRoll}
         />
       </div>
 
