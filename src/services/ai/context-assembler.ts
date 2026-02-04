@@ -103,6 +103,29 @@ export function parseRollRequest(content: string): string | null {
 }
 
 /**
+ * Parse XP award from AI response
+ * Extracts <xp_award> tags and returns XP amount + clean content
+ */
+export function parseXPAward(content: string): {
+  cleanContent: string;
+  xpAmount: number | null;
+} {
+  // Match <xp_award>X</xp_award> tag
+  const xpMatch = content.match(/<xp_award>(\d+)<\/xp_award>/i);
+
+  if (!xpMatch) {
+    return { cleanContent: content, xpAmount: null };
+  }
+
+  const xpAmount = parseInt(xpMatch[1], 10);
+
+  // Remove <xp_award> tag from content
+  const cleanContent = content.replace(/<xp_award>\d+<\/xp_award>/gi, '').trim();
+
+  return { cleanContent, xpAmount };
+}
+
+/**
  * Parse suggested actions from AI response
  * Extracts action tags and returns clean content + actions
  */

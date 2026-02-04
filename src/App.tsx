@@ -5,8 +5,10 @@ import { Sidebar } from './components/sidebar/Sidebar';
 import { ApiKeySetup } from './components/common/ApiKeySetup';
 import { SettingsModal } from './components/common/SettingsModal';
 import { CharacterCreation } from './components/character/CharacterCreation';
+import { LevelUpModal } from './components/character/LevelUpModal';
 import { useCampaignStore } from './store/campaign-store';
 import { useChatStore } from './store/chat-store';
+import { useCharacterStore } from './store/character-store';
 import { useMessages } from './hooks/useMessages';
 import { useRolls } from './hooks/useRolls';
 import { useAI } from './hooks/useAI';
@@ -32,6 +34,7 @@ function App() {
   // All hooks must be called unconditionally at the top
   const { activeCampaignId, setActiveCampaign, getActiveCampaign } = useCampaignStore();
   const { isAIResponding, streamedContent, suggestedActions, messagesLoaded, loadedMessageCount, loadGeneration } = useChatStore();
+  const { levelUpPending, attributePointsAvailable, confirmLevelUp } = useCharacterStore();
   const activeCampaign = getActiveCampaign();
 
   // Load messages and rolls for active campaign
@@ -217,7 +220,7 @@ function App() {
 
     // If action has a roll notation, send action + roll together
     if (action.rollNotation) {
-      await sendActionWithRoll(action.action, action.rollNotation);
+      await sendActionWithRoll(action.action, action.rollNotation, action.dc);
     } else {
       // Otherwise, just send the action as a regular message
       await sendMessage(action.action);
@@ -231,6 +234,23 @@ function App() {
     } catch (err) {
       console.error('Failed to create character:', err);
       alert('Failed to create character: ' + (err as Error).message);
+    }
+  };
+
+  const handleLevelUpConfirm = async (attributeAllocations: Record<string, number>) => {
+    try {
+      // Apply attribute allocations
+      for (const [attrName, points] of Object.entries(attributeAllocations)) {
+        for (let i = 0; i < points; i++) {
+          await useCharacterStore.getState().incrementAttribute(attrName);
+        }
+      }
+
+      // Confirm level-up (clears levelUpPending flag)
+      await confirmLevelUp();
+    } catch (err) {
+      console.error('Failed to confirm level-up:', err);
+      alert('Failed to confirm level-up: ' + (err as Error).message);
     }
   };
 
@@ -346,6 +366,15 @@ function App() {
       />
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {levelUpPending && _character && (
+        <LevelUpModal
+          character={_character}
+          campaignSystem={activeCampaign.system}
+          attributePoints={attributePointsAvailable}
+          onConfirm={handleLevelUpConfirm}
+        />
+      )}
     </div>
   );
 }

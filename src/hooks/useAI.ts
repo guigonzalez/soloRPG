@@ -1,5 +1,6 @@
 import { useChatStore } from '../store/chat-store';
 import { useCampaignStore } from '../store/campaign-store';
+import { useCharacterStore } from '../store/character-store';
 import { getGameEngine } from '../services/game/game-engine';
 import * as messageRepo from '../services/storage/message-repo';
 import * as recapRepo from '../services/storage/recap-repo';
@@ -8,6 +9,7 @@ import * as factRepo from '../services/storage/fact-repo';
 import * as rollRepo from '../services/storage/roll-repo';
 import { isValidDiceNotation } from '../services/dice/dice-parser';
 import { rollDice } from '../services/dice/dice-roller';
+import { calculateRollXP } from '../services/game/experience-calculator';
 import type { NewMessage } from '../types/models';
 
 /**
@@ -79,7 +81,7 @@ export function useAI(campaignId: string | null) {
    * Send action with automatic roll
    * Used when player selects a suggested action that requires a roll
    */
-  const sendActionWithRoll = async (actionText: string, rollNotation: string) => {
+  const sendActionWithRoll = async (actionText: string, rollNotation: string, dc?: number) => {
     if (!campaignId) {
       throw new Error('No active campaign');
     }
@@ -121,6 +123,38 @@ export function useAI(campaignId: string | null) {
       const savedRollMessage = await messageRepo.createMessage(rollMessage);
       addMessage(savedRollMessage);
 
+      // 3. Check for natural 20 (critical success)
+      const isNaturalCrit = result.rolls.length === 1 && result.rolls[0] === 20;
+
+      // 4. Award XP if roll was successful
+      const xpAward = calculateRollXP(result.total, dc, isNaturalCrit);
+      if (xpAward) {
+        // Update character XP
+        const levelUpResult = await useCharacterStore.getState().updateExperience(xpAward.amount, campaign.system);
+
+        // Show XP gain in chat
+        const xpMessage: NewMessage = {
+          campaignId,
+          role: 'system',
+          content: `✨ +${xpAward.amount} XP - ${xpAward.reason}`,
+        };
+
+        const savedXPMessage = await messageRepo.createMessage(xpMessage);
+        addMessage(savedXPMessage);
+
+        // Handle level up
+        if (levelUpResult.leveledUp) {
+          const levelUpMessage: NewMessage = {
+            campaignId,
+            role: 'system',
+            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
+          };
+
+          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
+          addMessage(savedLevelUpMessage);
+        }
+      }
+
       // 3. Start AI response
       setAIResponding(true);
       setStreamedContent('');
@@ -131,6 +165,7 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
+      const character = useCharacterStore.getState().character;
 
       // Include the action and roll in context
       const allMessages = [...messages, savedUserMessage, savedRollMessage];
@@ -143,6 +178,7 @@ export function useAI(campaignId: string | null) {
           recap,
           entities,
           facts,
+          character,
         },
         result.total,
         result.notation,
@@ -212,6 +248,7 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
+      const character = useCharacterStore.getState().character;
 
       // Get all messages including the one we just added
       const allMessages = [...messages, savedUserMessage];
@@ -224,6 +261,7 @@ export function useAI(campaignId: string | null) {
           recap,
           entities,
           facts,
+          character,
         },
         (chunk) => {
           appendStreamedContent(chunk);
@@ -239,6 +277,33 @@ export function useAI(campaignId: string | null) {
 
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
+
+      // Handle XP award from AI (story progression, milestones, etc.)
+      if (response.xpAward) {
+        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
+
+        // Show XP gain in chat
+        const xpMessage: NewMessage = {
+          campaignId,
+          role: 'system',
+          content: `✨ +${response.xpAward} XP - Story progression`,
+        };
+
+        const savedXPMessage = await messageRepo.createMessage(xpMessage);
+        addMessage(savedXPMessage);
+
+        // Handle level up
+        if (levelUpResult.leveledUp) {
+          const levelUpMessage: NewMessage = {
+            campaignId,
+            role: 'system',
+            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
+          };
+
+          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
+          addMessage(savedLevelUpMessage);
+        }
+      }
 
       setAIResponding(false);
       setStreamedContent('');
@@ -280,6 +345,7 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
+      const character = useCharacterStore.getState().character;
 
       // Get AI response with streaming
       const response = await gameEngine.getAIResponseAfterRoll(
@@ -289,6 +355,7 @@ export function useAI(campaignId: string | null) {
           recap,
           entities,
           facts,
+          character,
         },
         rollResult,
         rollNotation,
@@ -306,6 +373,33 @@ export function useAI(campaignId: string | null) {
 
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
+
+      // Handle XP award from AI (story progression, milestones, etc.)
+      if (response.xpAward) {
+        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
+
+        // Show XP gain in chat
+        const xpMessage: NewMessage = {
+          campaignId,
+          role: 'system',
+          content: `✨ +${response.xpAward} XP - Story progression`,
+        };
+
+        const savedXPMessage = await messageRepo.createMessage(xpMessage);
+        addMessage(savedXPMessage);
+
+        // Handle level up
+        if (levelUpResult.leveledUp) {
+          const levelUpMessage: NewMessage = {
+            campaignId,
+            role: 'system',
+            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
+          };
+
+          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
+          addMessage(savedLevelUpMessage);
+        }
+      }
 
       setAIResponding(false);
       setStreamedContent('');
@@ -348,6 +442,7 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
+      const character = useCharacterStore.getState().character;
 
       // Get initial AI response with streaming
       const response = await gameEngine.getAIResponse(
@@ -357,6 +452,7 @@ export function useAI(campaignId: string | null) {
           recap,
           entities,
           facts,
+          character,
         },
         (chunk) => {
           appendStreamedContent(chunk);
@@ -372,6 +468,33 @@ export function useAI(campaignId: string | null) {
 
       const savedAIMessage = await messageRepo.createMessage(aiMessage);
       addMessage(savedAIMessage);
+
+      // Handle XP award from AI (story progression, milestones, etc.)
+      if (response.xpAward) {
+        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
+
+        // Show XP gain in chat
+        const xpMessage: NewMessage = {
+          campaignId,
+          role: 'system',
+          content: `✨ +${response.xpAward} XP - Story progression`,
+        };
+
+        const savedXPMessage = await messageRepo.createMessage(xpMessage);
+        addMessage(savedXPMessage);
+
+        // Handle level up
+        if (levelUpResult.leveledUp) {
+          const levelUpMessage: NewMessage = {
+            campaignId,
+            role: 'system',
+            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
+          };
+
+          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
+          addMessage(savedLevelUpMessage);
+        }
+      }
 
       setAIResponding(false);
       setStreamedContent('');

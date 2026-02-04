@@ -1,9 +1,9 @@
 import { getClaudeClient } from '../ai/claude-client';
 import { getGeminiClient } from '../ai/gemini-client';
 import { buildSystemPrompt } from '../ai/prompt-builder';
-import { assembleContext, parseRollRequest, parseSuggestedActions } from '../ai/context-assembler';
+import { assembleContext, parseRollRequest, parseSuggestedActions, parseXPAward } from '../ai/context-assembler';
 import { getAIProvider } from '../storage/api-key-storage';
-import type { Campaign, Message, Entity, Fact, Recap, SuggestedAction } from '../../types/models';
+import type { Campaign, Message, Entity, Fact, Recap, SuggestedAction, Character } from '../../types/models';
 import type { ClaudeMessage } from '../../types/api';
 
 export interface GameEngineContext {
@@ -12,12 +12,14 @@ export interface GameEngineContext {
   recap: Recap | null;
   entities: Entity[];
   facts: Fact[];
+  character: Character | null;
 }
 
 export interface AIResponse {
   content: string;
   rollRequest: string | null;
   suggestedActions: SuggestedAction[];
+  xpAward: number | null;
 }
 
 /**
@@ -56,7 +58,8 @@ export class GameEngine {
       context.campaign,
       context.recap,
       context.entities,
-      context.facts
+      context.facts,
+      context.character
     );
 
     // Assemble conversation context
@@ -70,8 +73,11 @@ export class GameEngine {
       onChunk
     );
 
-    // Parse suggested actions and get clean content
-    const { cleanContent, actions } = parseSuggestedActions(rawContent);
+    // Parse XP award first
+    const { cleanContent: contentAfterXP, xpAmount } = parseXPAward(rawContent);
+
+    // Parse suggested actions
+    const { cleanContent, actions } = parseSuggestedActions(contentAfterXP);
 
     // Check if AI is requesting a roll
     const rollRequest = parseRollRequest(cleanContent);
@@ -80,6 +86,7 @@ export class GameEngine {
       content: cleanContent,
       rollRequest,
       suggestedActions: actions,
+      xpAward: xpAmount,
     };
   }
 
@@ -109,7 +116,8 @@ export class GameEngine {
       context.campaign,
       context.recap,
       context.entities,
-      context.facts
+      context.facts,
+      context.character
     );
 
     // Add instruction to respond to the roll
@@ -132,8 +140,11 @@ Then present the new situation and ask "What do you do?"`;
       onChunk
     );
 
-    // Parse suggested actions and get clean content
-    const { cleanContent, actions } = parseSuggestedActions(rawContent);
+    // Parse XP award first
+    const { cleanContent: contentAfterXP, xpAmount } = parseXPAward(rawContent);
+
+    // Parse suggested actions
+    const { cleanContent, actions } = parseSuggestedActions(contentAfterXP);
 
     // Check if AI is requesting another roll
     const rollRequest = parseRollRequest(cleanContent);
@@ -142,6 +153,7 @@ Then present the new situation and ask "What do you do?"`;
       content: cleanContent,
       rollRequest,
       suggestedActions: actions,
+      xpAward: xpAmount,
     };
   }
 }

@@ -1,5 +1,6 @@
-import type { Campaign, Entity, Fact, Recap } from '../../types/models';
+import type { Campaign, Entity, Fact, Recap, Character } from '../../types/models';
 import { getLanguage, getLanguageName } from '../storage/settings-storage';
+import { getSystemTemplate } from '../game/attribute-templates';
 
 /**
  * Get system-specific guidance for difficulty checks
@@ -29,11 +30,34 @@ export function buildSystemPrompt(
   campaign: Campaign,
   recap: Recap | null,
   entities: Entity[],
-  facts: Fact[]
+  facts: Fact[],
+  character: Character | null = null
 ): string {
   const sections = [];
   const language = getLanguage();
   const languageName = getLanguageName(language);
+
+  // Build character stats display
+  let characterDisplay = '';
+  if (character) {
+    const template = getSystemTemplate(campaign.system);
+    const attrs = template.attributes
+      .map((attrDef) => {
+        const value = character.attributes[attrDef.name] || 0;
+        const modifier = template.modifierCalculation?.(value);
+        return modifier !== undefined
+          ? `${attrDef.displayName} ${value} (${modifier >= 0 ? '+' : ''}${modifier})`
+          : `${attrDef.displayName} ${value}`;
+      })
+      .join(', ');
+
+    characterDisplay = `
+Player Character:
+- Name: ${character.name}
+- Level: ${character.level} (${character.experience} XP)
+- Attributes: ${attrs}
+`;
+  }
 
   // C - Context
   sections.push(`# CONTEXT
@@ -47,7 +71,7 @@ Campaign Details:
 - System: ${campaign.system}
 - Theme: ${campaign.theme}
 - Tone: ${campaign.tone}
-
+${characterDisplay}
 ${recap ? `Current Situation:\n${recap.summaryShort}` : 'This is the beginning of the adventure.'}
 `);
 
@@ -76,11 +100,39 @@ ${facts.map(f => `- ${f.predicate}: ${f.object}`).join('\n')}
 `);
 
   // R - Rules
-  sections.push(`# RULES
+  const characterRules = character
+    ? `
+2. **Character Attributes**: Consider the character's capabilities when:
+   - Setting difficulty classes (adjust based on character level and attributes)
+   - Suggesting appropriate actions (align with character strengths)
+   - Narrating outcomes (reflect how attributes affect success/failure)
+   - Suggested actions should include attribute modifiers when relevant:
+     Example: <action id="1" label="Attack (STR)" roll="1d20+STR" dc="14">I attack with my sword</action>
 
-1. **System Mechanics**: Use ${campaign.system} conventions for difficulty and challenges:
-   ${getSystemGuidance(campaign.system)}
+3. **Experience Awards**: You MAY award experience points for significant achievements:
+   - Story milestones, quest completion, clever solutions
+   - Use the tag: <xp_award>25</xp_award> (typically 25-100 XP for major accomplishments)
+   - Do NOT award XP for every action - save it for meaningful moments
+   - Successful dice rolls already award XP automatically
 
+4. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
+   - First, present the situation and ask "What do you do?"
+   - Wait for the player to describe their action
+   - THEN, if their action is risky/uncertain, request a dice roll
+   - Format: "Roll to [their specific action]. (DC: X)"
+   - Never request a roll before the player declares their action
+
+5. **Consequences Matter**: Both success and failure should advance the story in interesting ways
+
+6. **Consistency**: Reference and respect the established entities and facts above
+
+7. **No Railroading**: Present situations, but let the player decide their actions
+
+8. **New Information**: When introducing significant new characters, places, or items, describe them clearly
+
+9. **Stay in Theme**: All narration should fit the campaign theme and tone
+`
+    : `
 2. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
    - First, present the situation and ask "What do you do?"
    - Wait for the player to describe their action
@@ -97,7 +149,13 @@ ${facts.map(f => `- ${f.predicate}: ${f.object}`).join('\n')}
 6. **New Information**: When introducing significant new characters, places, or items, describe them clearly
 
 7. **Stay in Theme**: All narration should fit the campaign theme and tone
-`);
+`;
+
+  sections.push(`# RULES
+
+1. **System Mechanics**: Use ${campaign.system} conventions for difficulty and challenges:
+   ${getSystemGuidance(campaign.system)}
+${characterRules}`);
 
   // T - Tone
   sections.push(`# TONE
