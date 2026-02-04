@@ -5,6 +5,7 @@ import { CampaignCreate } from './CampaignCreate';
 import { Button } from '../common/Button';
 import { Loading } from '../common/Loading';
 import { SettingsModal } from '../common/SettingsModal';
+import { t } from '../../services/i18n/use-i18n';
 import type { Campaign, NewCampaign } from '../../types/models';
 
 interface CampaignListProps {
@@ -42,26 +43,26 @@ export function CampaignList({ onSelectCampaign }: CampaignListProps) {
   return (
     <div className="retro-container">
       <div className="app-header">
-        <h1 className="app-title">SoloRPG</h1>
+        <h1 className="app-title">{t('campaignList.title')}</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button onClick={() => setShowCreate(true)}>
-            New Campaign
+            {t('campaignList.newCampaign')}
           </Button>
           <Button onClick={() => setShowSettings(true)}>
-            ⚙ Settings
+            ⚙ {t('common.settings')}
           </Button>
         </div>
       </div>
 
       {loading && campaigns.length === 0 ? (
-        <Loading message="Loading campaigns" />
+        <Loading message={t('common.loading')} />
       ) : campaigns.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px' }}>
           <div style={{ fontSize: '18px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
-            No campaigns yet
+            {t('campaignList.noCampaigns')}
           </div>
           <Button onClick={() => setShowCreate(true)}>
-            Create Your First Adventure
+            {t('campaignList.createFirst')}
           </Button>
         </div>
       ) : (

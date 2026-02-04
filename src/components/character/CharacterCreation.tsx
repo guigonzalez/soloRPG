@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import { getSystemTemplate, isValidAttributeValue, type AttributeDefinition, type SystemTemplate } from '../../services/game/attribute-templates';
+import { t } from '../../services/i18n/use-i18n';
 
 interface CharacterCreationProps {
   campaignSystem: string;
@@ -114,7 +115,7 @@ export function CharacterCreation({
       overflowY: 'auto',
     }}>
       <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title={`Create Your Character - ${campaignSystem}`}>
+        <Card title={`${t('characterCreation.title')} - ${campaignSystem}`}>
           {/* Character Name */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{
@@ -123,13 +124,13 @@ export function CharacterCreation({
               marginBottom: '8px',
               color: '#9cd84e',
             }}>
-              Character Name
+              {t('characterCreation.characterName')}
             </label>
             <input
               type="text"
               value={characterName}
               onChange={(e) => setCharacterName(e.target.value)}
-              placeholder="Enter name..."
+              placeholder={t('characterCreation.characterNamePlaceholder')}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -156,7 +157,7 @@ export function CharacterCreation({
                 fontSize: '14px',
                 color: '#9cd84e',
               }}>
-                Attributes
+                {t('characterCreation.attributes')}
               </label>
               <button
                 onClick={handleRandomize}
@@ -170,7 +171,7 @@ export function CharacterCreation({
                   cursor: 'pointer',
                 }}
               >
-                Randomize
+                {t('characterCreation.randomize')}
               </button>
             </div>
 
@@ -280,7 +281,7 @@ export function CharacterCreation({
                       color: '#6a8f3a',
                       textAlign: 'center',
                     }}>
-                      Range: {attrDef.minValue}-{attrDef.maxValue}
+                      {t('characterCreation.range')}: {attrDef.minValue}-{attrDef.maxValue}
                     </div>
                   </div>
                 );
@@ -295,10 +296,10 @@ export function CharacterCreation({
             justifyContent: 'flex-end',
           }}>
             <Button onClick={onCancel} variant="secondary">
-              Cancel
+              {t('characterCreation.cancel')}
             </Button>
             <Button onClick={handleConfirm}>
-              Create Character
+              {t('characterCreation.createCharacter')}
             </Button>
           </div>
         </Card>

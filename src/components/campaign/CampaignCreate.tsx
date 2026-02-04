@@ -4,6 +4,7 @@ import { Input } from '../common/Input';
 import { Card } from '../common/Card';
 import { validateCampaignTitle, validateCampaignSystem, validateCampaignTheme, validateCampaignTone } from '../../utils/validation';
 import { generateCampaignSuggestion } from '../../services/ai/campaign-generator';
+import { t } from '../../services/i18n/use-i18n';
 import type { NewCampaign } from '../../types/models';
 
 interface CampaignCreateProps {
@@ -72,13 +73,13 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
 
   return (
     <div className="retro-container">
-      <Card title="Create New Campaign">
+      <Card title={t('campaignCreation.title')}>
         <form onSubmit={handleSubmit}>
           <Input
-            label="Campaign Title"
+            label={t('campaignCreation.campaignTitle')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., The Lost Kingdom"
+            placeholder={t('campaignCreation.campaignTitlePlaceholder')}
             required
           />
           {errors.title && (
@@ -89,7 +90,7 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
 
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label className="form-label" style={{ margin: 0 }}>RPG System</label>
+              <label className="form-label" style={{ margin: 0 }}>{t('campaignCreation.system')}</label>
               <button
                 type="button"
                 className="retro-button"
@@ -101,7 +102,7 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
                   minWidth: 'auto',
                 }}
               >
-                {isGenerating ? '⏳ Generating...' : '✨ Generate with AI'}
+                {isGenerating ? '⏳ ' + t('campaignCreation.creating') : '✨ Generate with AI'}
               </button>
             </div>
             <select
@@ -130,12 +131,12 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
           )}
 
           <div className="form-group">
-            <label className="form-label">Theme / Setting</label>
+            <label className="form-label">{t('campaignCreation.theme')}</label>
             <textarea
               className="form-textarea"
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              placeholder="e.g., Medieval fantasy with ancient ruins and mysterious magic"
+              placeholder={t('campaignCreation.themePlaceholder')}
               rows={3}
               required
             />
@@ -147,7 +148,7 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
           )}
 
           <Input
-            label="Tone"
+            label={t('campaignCreation.tone')}
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             placeholder="e.g., Serious, whimsical, dark, heroic"
@@ -167,10 +168,10 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Start Adventure'}
+              {isSubmitting ? t('campaignCreation.creating') : t('campaignCreation.startCampaign')}
             </Button>
             <Button type="button" onClick={onCancel}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </form>
