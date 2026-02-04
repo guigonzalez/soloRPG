@@ -49,7 +49,7 @@ function App() {
   );
 
   // Use real AI
-  const { sendMessage, sendActionWithRoll, startCampaign } = useAI(activeCampaignId);
+  const { sendMessage, sendActionWithRoll, startCampaign, resendMessage, continueNarration } = useAI(activeCampaignId);
 
   // Check if API key is configured on mount
   useEffect(() => {
@@ -233,9 +233,16 @@ function App() {
     await sendActionWithRoll('', rollNotation, dc);
   };
 
-  const handleCharacterCreation = async (name: string, attributes: Record<string, number>) => {
+  const handleCharacterCreation = async (
+    name: string,
+    attributes: Record<string, number>,
+    backstory?: string,
+    personality?: string,
+    goals?: string,
+    fears?: string
+  ) => {
     try {
-      await handleCreateCharacter(name, attributes);
+      await handleCreateCharacter(name, attributes, backstory, personality, goals, fears);
       // Character is now created, component will re-render
     } catch (err) {
       console.error('Failed to create character:', err);
@@ -343,7 +350,7 @@ function App() {
           <h1 className="app-title">{activeCampaign.title}</h1>
           <div>
             <button className="retro-button" onClick={() => setShowSettings(true)}>
-              ⚙ {t('common.settings')}
+              {t('common.settings')}
             </button>
           </div>
         </div>
@@ -352,6 +359,8 @@ function App() {
           messages={messages}
           rolls={rolls}
           onSendMessage={sendMessage}
+          onResendMessage={resendMessage}
+          onContinueNarration={continueNarration}
           isAIResponding={isAIResponding}
           streamedContent={streamedContent}
           suggestedActions={suggestedActions}

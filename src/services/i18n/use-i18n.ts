@@ -46,3 +46,10 @@ export function useTranslations(): Translations {
  * Shorthand alias for useTranslation
  */
 export const t = useTranslation;
+
+/**
+ * Get current language code
+ */
+export function getCurrentLanguage(): Language {
+  return getLanguage() as Language;
+}

@@ -17,6 +17,8 @@ export interface Translations {
     edit: string;
     loading: string;
     error: string;
+    aiOfflineNotice: string;
+    aiErrorNotice: string;
   };
 
   // Campaign List
@@ -33,6 +35,7 @@ export interface Translations {
   campaign: {
     endSessionConfirm: string;
     sessionSaved: string;
+    startFallback: string;
   };
 
   // Campaign Creation
@@ -78,6 +81,14 @@ export interface Translations {
     goalsPlaceholder: string;
     fears: string;
     fearsPlaceholder: string;
+    basicTab: string;
+    attributesTab: string;
+    backgroundTab: string;
+    generateWithAI: string;
+    generating: string;
+    apiKeyRequired: string;
+    invalidApiKey: string;
+    generationFailed: string;
   };
 
   // Character Panel
@@ -143,6 +154,8 @@ export interface Translations {
     firstActionPrompt: string;
     narratorTyping: string;
     narratorThinking: string;
+    resendMessage: string;
+    continueNarration: string;
   };
 
   // XP System
@@ -180,6 +193,12 @@ export interface Translations {
     saveSettings: string;
     clearData: string;
     clearDataConfirm: string;
+    exportCampaign: string;
+    importCampaign: string;
+    exportSuccess: string;
+    importSuccess: string;
+    importFailed: string;
+    selectFile: string;
   };
 
   // Errors
@@ -208,6 +227,8 @@ export const translations: Record<Language, Translations> = {
       edit: 'Edit',
       loading: 'Loading...',
       error: 'Error',
+      aiOfflineNotice: '⚠️ AI service temporarily unavailable. Using offline mode.',
+      aiErrorNotice: '⚠️ AI service error. You can continue playing with the fallback narration.',
     },
 
     campaignList: {
@@ -222,6 +243,7 @@ export const translations: Record<Language, Translations> = {
     campaign: {
       endSessionConfirm: 'End this session? This will save your progress and extract important memories from your adventure.',
       sessionSaved: 'Session ended! Your progress has been saved.',
+      startFallback: 'Welcome to your {{theme}} adventure in the {{system}} system!\n\nYour journey begins in a world filled with mystery and danger. The tone is {{tone}}, and countless stories await to be told.\n\nWhat would you like to do?',
     },
 
     campaignCreation: {
@@ -264,6 +286,14 @@ export const translations: Record<Language, Translations> = {
       goalsPlaceholder: 'What does your character want to achieve?',
       fears: 'Fears',
       fearsPlaceholder: 'What does your character fear?',
+      basicTab: 'Basic',
+      attributesTab: 'Attributes',
+      backgroundTab: 'Background',
+      generateWithAI: 'Generate with AI',
+      generating: 'Generating...',
+      apiKeyRequired: 'Please configure your Claude API key in Settings first.',
+      invalidApiKey: 'Invalid API key. Please check your Claude API key in Settings.',
+      generationFailed: 'Failed to generate character background. Please try again.',
     },
 
     characterPanel: {
@@ -323,6 +353,8 @@ export const translations: Record<Language, Translations> = {
       firstActionPrompt: 'Describe your first action below',
       narratorTyping: 'NARRATOR · typing...',
       narratorThinking: 'Narrator is thinking',
+      resendMessage: 'Resend',
+      continueNarration: 'Continue',
     },
 
     xp: {
@@ -357,6 +389,12 @@ export const translations: Record<Language, Translations> = {
       saveSettings: 'Save Settings',
       clearData: 'Clear All Data',
       clearDataConfirm: 'Are you sure? This will delete all campaigns and characters!',
+      exportCampaign: 'Export Campaign',
+      importCampaign: 'Import Campaign',
+      exportSuccess: 'Campaign exported successfully!',
+      importSuccess: 'Campaign imported successfully!',
+      importFailed: 'Failed to import campaign',
+      selectFile: 'Select File',
     },
 
     errors: {
@@ -383,6 +421,8 @@ export const translations: Record<Language, Translations> = {
       edit: 'Editar',
       loading: 'Carregando...',
       error: 'Erro',
+      aiOfflineNotice: '⚠️ Serviço de IA temporariamente indisponível. Usando modo offline.',
+      aiErrorNotice: '⚠️ Erro no serviço de IA. Você pode continuar jogando com a narração alternativa.',
     },
 
     campaignList: {
@@ -397,6 +437,7 @@ export const translations: Record<Language, Translations> = {
     campaign: {
       endSessionConfirm: 'Encerrar esta sessão? Isso salvará seu progresso e extrairá memórias importantes da sua aventura.',
       sessionSaved: 'Sessão encerrada! Seu progresso foi salvo.',
+      startFallback: 'Bem-vindo à sua aventura {{theme}} no sistema {{system}}!\n\nSua jornada começa em um mundo cheio de mistério e perigo. O tom é {{tone}}, e incontáveis histórias aguardam para serem contadas.\n\nO que você gostaria de fazer?',
     },
 
     campaignCreation: {
@@ -439,6 +480,14 @@ export const translations: Record<Language, Translations> = {
       goalsPlaceholder: 'O que seu personagem quer alcançar?',
       fears: 'Medos',
       fearsPlaceholder: 'Do que seu personagem tem medo?',
+      basicTab: 'Básico',
+      attributesTab: 'Atributos',
+      backgroundTab: 'História',
+      generateWithAI: 'Gerar com IA',
+      generating: 'Gerando...',
+      apiKeyRequired: 'Por favor, configure sua chave de API do Claude nas Configurações primeiro.',
+      invalidApiKey: 'Chave de API inválida. Verifique sua chave de API do Claude nas Configurações.',
+      generationFailed: 'Falha ao gerar histórico do personagem. Tente novamente.',
     },
 
     characterPanel: {
@@ -498,6 +547,8 @@ export const translations: Record<Language, Translations> = {
       firstActionPrompt: 'Descreva sua primeira ação abaixo',
       narratorTyping: 'NARRADOR · digitando...',
       narratorThinking: 'Narrador está pensando',
+      resendMessage: 'Reenviar',
+      continueNarration: 'Continuar',
     },
 
     xp: {
@@ -532,6 +583,12 @@ export const translations: Record<Language, Translations> = {
       saveSettings: 'Salvar Configurações',
       clearData: 'Limpar Todos os Dados',
       clearDataConfirm: 'Tem certeza? Isso excluirá todas as campanhas e personagens!',
+      exportCampaign: 'Exportar Campanha',
+      importCampaign: 'Importar Campanha',
+      exportSuccess: 'Campanha exportada com sucesso!',
+      importSuccess: 'Campanha importada com sucesso!',
+      importFailed: 'Falha ao importar campanha',
+      selectFile: 'Selecionar Arquivo',
     },
 
     errors: {
@@ -558,6 +615,8 @@ export const translations: Record<Language, Translations> = {
       edit: 'Editar',
       loading: 'Cargando...',
       error: 'Error',
+      aiOfflineNotice: '⚠️ Servicio de IA temporalmente no disponible. Usando modo sin conexión.',
+      aiErrorNotice: '⚠️ Error en el servicio de IA. Puedes continuar jugando con la narración alternativa.',
     },
 
     campaignList: {
@@ -572,6 +631,7 @@ export const translations: Record<Language, Translations> = {
     campaign: {
       endSessionConfirm: '¿Finalizar esta sesión? Esto guardará tu progreso y extraerá recuerdos importantes de tu aventura.',
       sessionSaved: '¡Sesión finalizada! Tu progreso ha sido guardado.',
+      startFallback: '¡Bienvenido a tu aventura {{theme}} en el sistema {{system}}!\n\nTu viaje comienza en un mundo lleno de misterio y peligro. El tono es {{tone}}, e innumerables historias esperan ser contadas.\n\n¿Qué te gustaría hacer?',
     },
 
     campaignCreation: {
@@ -614,6 +674,14 @@ export const translations: Record<Language, Translations> = {
       goalsPlaceholder: '¿Qué quiere lograr tu personaje?',
       fears: 'Miedos',
       fearsPlaceholder: '¿A qué le teme tu personaje?',
+      basicTab: 'Básico',
+      attributesTab: 'Atributos',
+      backgroundTab: 'Historia',
+      generateWithAI: 'Generar con IA',
+      generating: 'Generando...',
+      apiKeyRequired: 'Por favor, configure su clave de API de Claude en Configuración primero.',
+      invalidApiKey: 'Clave de API inválida. Verifique su clave de API de Claude en Configuración.',
+      generationFailed: 'Error al generar el historial del personaje. Inténtelo de nuevo.',
     },
 
     characterPanel: {
@@ -673,6 +741,8 @@ export const translations: Record<Language, Translations> = {
       firstActionPrompt: 'Describe tu primera acción abajo',
       narratorTyping: 'NARRADOR · escribiendo...',
       narratorThinking: 'Narrador está pensando',
+      resendMessage: 'Reenviar',
+      continueNarration: 'Continuar',
     },
 
     xp: {
@@ -707,6 +777,12 @@ export const translations: Record<Language, Translations> = {
       saveSettings: 'Guardar Configuración',
       clearData: 'Borrar Todos los Datos',
       clearDataConfirm: '¿Estás seguro? ¡Esto eliminará todas las campañas y personajes!',
+      exportCampaign: 'Exportar Campaña',
+      importCampaign: 'Importar Campaña',
+      exportSuccess: '¡Campaña exportada con éxito!',
+      importSuccess: '¡Campaña importada con éxito!',
+      importFailed: 'Error al importar campaña',
+      selectFile: 'Seleccionar Archivo',
     },
 
     errors: {

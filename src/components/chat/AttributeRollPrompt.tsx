@@ -88,7 +88,6 @@ export function AttributeRollPrompt({
       }}
       title={`Roll ${attrDef.displayName} check (${value}${modifierStr})${dc ? ` vs DC ${dc}` : ''}`}
     >
-      <span>🎲</span>
       <span>{attrDef.displayName}</span>
       {modifierStr && <span>({modifierStr})</span>}
       {dc && <span style={{ opacity: 0.7 }}>DC {dc}</span>}

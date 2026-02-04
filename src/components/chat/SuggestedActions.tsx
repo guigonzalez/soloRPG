@@ -54,7 +54,7 @@ export function SuggestedActions({ actions, onSelectAction, disabled }: Suggeste
                   opacity: 0.7,
                   marginLeft: '8px',
                 }}>
-                  🎲 {action.rollNotation} {action.dc ? `${t('chat.dc')} ${action.dc}` : ''}
+                  {action.rollNotation} {action.dc ? `${t('chat.dc')} ${action.dc}` : ''}
                 </span>
               )}
             </div>

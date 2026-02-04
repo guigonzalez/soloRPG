@@ -10,6 +10,8 @@ interface ChatContainerProps {
   messages: Message[];
   rolls: Roll[];
   onSendMessage: (content: string) => Promise<void>;
+  onResendMessage?: (content: string) => Promise<void>;
+  onContinueNarration?: () => Promise<void>;
   isAIResponding?: boolean;
   streamedContent?: string;
   suggestedActions?: SuggestedAction[];
@@ -35,6 +37,8 @@ export function ChatContainer({
   messages,
   rolls,
   onSendMessage,
+  onResendMessage,
+  onContinueNarration,
   isAIResponding = false,
   streamedContent = '',
   suggestedActions = [],
@@ -49,6 +53,11 @@ export function ChatContainer({
   // Find the last AI message index
   const lastAIMessageIndex = messages.length > 0
     ? messages.map((m, i) => m.role === 'ai' ? i : -1).filter(i => i !== -1).pop()
+    : -1;
+
+  // Find the last user message index
+  const lastUserMessageIndex = messages.length > 0
+    ? messages.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1).pop()
     : -1;
 
   // Auto-scroll to bottom when new messages arrive
@@ -82,6 +91,7 @@ export function ChatContainer({
           const message = item.data as Message;
           const messageIndex = messages.findIndex(m => m.id === message.id);
           const isLastAIMessage = messageIndex === lastAIMessageIndex;
+          const isLastUserMessage = messageIndex === lastUserMessageIndex;
           const showActions = isLastAIMessage && suggestedActions.length > 0 && !isAIResponding;
 
           return (
@@ -94,6 +104,10 @@ export function ChatContainer({
               character={character}
               campaignSystem={campaignSystem}
               onAttributeRoll={onAttributeRoll}
+              onResendMessage={onResendMessage || onSendMessage}
+              onContinueNarration={onContinueNarration}
+              isLastUserMessage={isLastUserMessage}
+              isLastAIMessage={isLastAIMessage}
             />
           );
         })}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card } from '../common/Card';
 import { formatDate } from '../../utils/date';
+import { exportAndDownloadCampaign } from '../../services/export/campaign-exporter';
+import { t } from '../../services/i18n/use-i18n';
 import type { Campaign } from '../../types/models';
 
 interface CampaignCardProps {
@@ -14,6 +16,17 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
     e.stopPropagation();
     if (confirm(`Delete campaign "${campaign.title}"? This cannot be undone.`)) {
       onDelete(campaign);
+    }
+  };
+
+  const handleExport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await exportAndDownloadCampaign(campaign.id, campaign.title);
+      alert(t('settings.exportSuccess'));
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert(`${t('common.error')}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -41,13 +54,22 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
         <strong>Tone:</strong> {campaign.tone}
       </div>
 
-      <button
-        className="retro-button"
-        onClick={handleDelete}
-        style={{ fontSize: '12px', padding: '4px 8px' }}
-      >
-        Delete
-      </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          className="retro-button"
+          onClick={handleExport}
+          style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+        >
+          {t('settings.exportCampaign')}
+        </button>
+        <button
+          className="retro-button"
+          onClick={handleDelete}
+          style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
+        >
+          Delete
+        </button>
+      </div>
     </Card>
   );
 }

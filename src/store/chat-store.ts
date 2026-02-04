@@ -15,6 +15,7 @@ interface ChatStore {
   // Actions
   setMessages: (messages: Message[]) => void;
   addMessage: (message: Message) => void;
+  removeMessagesAfter: (messageId: string) => void;
   setAIResponding: (responding: boolean) => void;
   setStreamedContent: (content: string) => void;
   appendStreamedContent: (chunk: string) => void;
@@ -41,6 +42,18 @@ export const useChatStore = create<ChatStore>((set) => ({
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message],
   })),
+
+  removeMessagesAfter: (messageId) => set((state) => {
+    const index = state.messages.findIndex(m => m.id === messageId);
+    if (index === -1) return state;
+
+    // Keep messages up to and including the specified message
+    return {
+      messages: state.messages.slice(0, index + 1),
+      suggestedActions: [], // Clear suggested actions
+      streamedContent: '', // Clear any streaming content
+    };
+  }),
 
   setAIResponding: (responding) => set({ isAIResponding: responding }),
 

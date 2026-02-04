@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Character } from '../../types/models';
 import { getSystemTemplate, getAttributeModifier } from '../../services/game/attribute-templates';
 import { getNextLevelXP } from '../../services/game/experience-calculator';
@@ -17,6 +18,11 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
   const xpProgress = nextLevelXP !== Infinity
     ? ((character.experience / nextLevelXP) * 100).toFixed(0)
     : 100;
+
+  const [showBackstory, setShowBackstory] = useState(false);
+
+  // Check if character has any backstory information
+  const hasBackstory = character.backstory || character.personality || character.goals || character.fears;
 
   return (
     <div className="character-panel">
@@ -161,7 +167,7 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
       )}
 
       {/* Attributes */}
-      <div>
+      <div style={{ marginBottom: hasBackstory ? '16px' : '0' }}>
         <h4 style={{
           fontSize: '12px',
           marginBottom: '12px',
@@ -221,6 +227,118 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           })}
         </div>
       </div>
+
+      {/* Backstory Section */}
+      {hasBackstory && (
+        <div>
+          <button
+            onClick={() => setShowBackstory(!showBackstory)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '12px',
+              fontFamily: '"Press Start 2P", monospace',
+              backgroundColor: '#0f380f',
+              color: '#9cd84e',
+              border: '2px solid #9cd84e',
+              cursor: 'pointer',
+              marginBottom: showBackstory ? '12px' : '0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>{t('characterCreation.backgroundTab')}</span>
+            <span>{showBackstory ? '▼' : '▶'}</span>
+          </button>
+
+          {showBackstory && (
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#0f380f',
+              border: '1px solid #9cd84e',
+              fontSize: '10px',
+              lineHeight: '1.6',
+            }}>
+              {character.backstory && (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#9cd84e',
+                    marginBottom: '6px',
+                    fontWeight: 'bold',
+                  }}>
+                    {t('characterCreation.backstory')}
+                  </div>
+                  <div style={{
+                    color: '#6a8f3a',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {character.backstory}
+                  </div>
+                </div>
+              )}
+
+              {character.personality && (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#9cd84e',
+                    marginBottom: '6px',
+                    fontWeight: 'bold',
+                  }}>
+                    {t('characterCreation.personality')}
+                  </div>
+                  <div style={{
+                    color: '#6a8f3a',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {character.personality}
+                  </div>
+                </div>
+              )}
+
+              {character.goals && (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#9cd84e',
+                    marginBottom: '6px',
+                    fontWeight: 'bold',
+                  }}>
+                    {t('characterCreation.goals')}
+                  </div>
+                  <div style={{
+                    color: '#6a8f3a',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {character.goals}
+                  </div>
+                </div>
+              )}
+
+              {character.fears && (
+                <div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#9cd84e',
+                    marginBottom: '6px',
+                    fontWeight: 'bold',
+                  }}>
+                    {t('characterCreation.fears')}
+                  </div>
+                  <div style={{
+                    color: '#6a8f3a',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {character.fears}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

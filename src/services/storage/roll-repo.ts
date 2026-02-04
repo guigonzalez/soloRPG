@@ -50,3 +50,24 @@ export async function deleteRoll(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('rolls', id);
 }
+
+/**
+ * Delete all rolls in a campaign created after a specific timestamp
+ */
+export async function deleteRollsAfterTimestamp(
+  campaignId: string,
+  afterTimestamp: number
+): Promise<void> {
+  const db = await getDB();
+  const index = db.transaction('rolls', 'readwrite').store.index('campaignCreatedAt');
+  const range = IDBKeyRange.bound(
+    [campaignId, afterTimestamp],
+    [campaignId, Date.now()]
+  );
+
+  let cursor = await index.openCursor(range);
+  while (cursor) {
+    await cursor.delete();
+    cursor = await cursor.continue();
+  }
+}

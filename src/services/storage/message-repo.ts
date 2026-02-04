@@ -56,3 +56,24 @@ export async function deleteMessage(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('messages', id);
 }
+
+/**
+ * Delete all messages in a campaign created after a specific timestamp
+ */
+export async function deleteMessagesAfterTimestamp(
+  campaignId: string,
+  afterTimestamp: number
+): Promise<void> {
+  const db = await getDB();
+  const index = db.transaction('messages', 'readwrite').store.index('campaignCreatedAt');
+  const range = IDBKeyRange.bound(
+    [campaignId, afterTimestamp],
+    [campaignId, Date.now()]
+  );
+
+  let cursor = await index.openCursor(range);
+  while (cursor) {
+    await cursor.delete();
+    cursor = await cursor.continue();
+  }
+}
