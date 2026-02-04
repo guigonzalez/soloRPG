@@ -15,6 +15,7 @@ import { useAI } from './hooks/useAI';
 import { useCharacter } from './hooks/useCharacter';
 import { hasApiKey } from './services/storage/api-key-storage';
 import { extractMemory } from './services/ai/memory-extractor';
+import { t } from './services/i18n/use-i18n';
 import * as recapRepo from './services/storage/recap-repo';
 import * as entityRepo from './services/storage/entity-repo';
 import * as factRepo from './services/storage/fact-repo';
@@ -233,7 +234,7 @@ function App() {
       // Character is now created, component will re-render
     } catch (err) {
       console.error('Failed to create character:', err);
-      alert('Failed to create character: ' + (err as Error).message);
+      alert(t('errors.failedToCreateCharacter') + ': ' + (err as Error).message);
     }
   };
 
@@ -250,16 +251,14 @@ function App() {
       await confirmLevelUp();
     } catch (err) {
       console.error('Failed to confirm level-up:', err);
-      alert('Failed to confirm level-up: ' + (err as Error).message);
+      alert(t('errors.failedToLevelUp') + ': ' + (err as Error).message);
     }
   };
 
   const handleEndSession = async () => {
     if (!activeCampaignId || !activeCampaign) return;
 
-    const confirmed = confirm(
-      'End this session? This will save your progress and extract important memories from your adventure.'
-    );
+    const confirmed = confirm(t('campaign.endSessionConfirm'));
 
     if (!confirmed) return;
 
@@ -303,11 +302,11 @@ function App() {
         }
       }
 
-      alert('Session ended! Your progress has been saved.');
+      alert(t('campaign.sessionSaved'));
       handleBackToCampaigns();
     } catch (err) {
       console.error('Failed to end session:', err);
-      alert('Failed to save session: ' + (err as Error).message);
+      alert(t('errors.failedToSaveSession') + ': ' + (err as Error).message);
     }
   };
 
@@ -333,13 +332,13 @@ function App() {
         <div className="app-header">
           <div>
             <button className="retro-button" onClick={handleBackToCampaigns}>
-              ← Back
+              ← {t('common.back')}
             </button>
           </div>
           <h1 className="app-title">{activeCampaign.title}</h1>
           <div>
             <button className="retro-button" onClick={() => setShowSettings(true)}>
-              ⚙ Settings
+              ⚙ {t('common.settings')}
             </button>
           </div>
         </div>

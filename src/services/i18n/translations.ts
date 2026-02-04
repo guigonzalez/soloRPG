@@ -29,6 +29,12 @@ export interface Translations {
     selectCampaign: string;
   };
 
+  // Campaign Interface
+  campaign: {
+    endSessionConfirm: string;
+    sessionSaved: string;
+  };
+
   // Campaign Creation
   campaignCreation: {
     title: string;
@@ -164,6 +170,7 @@ export interface Translations {
     failedToCreateCharacter: string;
     failedToLevelUp: string;
     failedToUpdateRecap: string;
+    failedToSaveSession: string;
     apiKeyRequired: string;
     invalidDiceNotation: string;
   };
@@ -191,6 +198,11 @@ export const translations: Record<Language, Translations> = {
       createFirst: 'Create your first adventure!',
       lastPlayed: 'Last played',
       selectCampaign: 'Select a campaign to continue',
+    },
+
+    campaign: {
+      endSessionConfirm: 'End this session? This will save your progress and extract important memories from your adventure.',
+      sessionSaved: 'Session ended! Your progress has been saved.',
     },
 
     campaignCreation: {
@@ -316,6 +328,7 @@ export const translations: Record<Language, Translations> = {
       failedToCreateCharacter: 'Failed to create character',
       failedToLevelUp: 'Failed to confirm level-up',
       failedToUpdateRecap: 'Failed to update recap',
+      failedToSaveSession: 'Failed to save session',
       apiKeyRequired: 'API key is required',
       invalidDiceNotation: 'Invalid dice notation',
     },
@@ -342,6 +355,11 @@ export const translations: Record<Language, Translations> = {
       createFirst: 'Crie sua primeira aventura!',
       lastPlayed: 'Última jogada',
       selectCampaign: 'Selecione uma campanha para continuar',
+    },
+
+    campaign: {
+      endSessionConfirm: 'Encerrar esta sessão? Isso salvará seu progresso e extrairá memórias importantes da sua aventura.',
+      sessionSaved: 'Sessão encerrada! Seu progresso foi salvo.',
     },
 
     campaignCreation: {
@@ -467,6 +485,7 @@ export const translations: Record<Language, Translations> = {
       failedToCreateCharacter: 'Falha ao criar personagem',
       failedToLevelUp: 'Falha ao confirmar subida de nível',
       failedToUpdateRecap: 'Falha ao atualizar resumo',
+      failedToSaveSession: 'Falha ao salvar sessão',
       apiKeyRequired: 'Chave de API é obrigatória',
       invalidDiceNotation: 'Notação de dados inválida',
     },
@@ -493,6 +512,11 @@ export const translations: Record<Language, Translations> = {
       createFirst: '¡Crea tu primera aventura!',
       lastPlayed: 'Última jugada',
       selectCampaign: 'Selecciona una campaña para continuar',
+    },
+
+    campaign: {
+      endSessionConfirm: '¿Finalizar esta sesión? Esto guardará tu progreso y extraerá recuerdos importantes de tu aventura.',
+      sessionSaved: '¡Sesión finalizada! Tu progreso ha sido guardado.',
     },
 
     campaignCreation: {
@@ -618,6 +642,7 @@ export const translations: Record<Language, Translations> = {
       failedToCreateCharacter: 'Error al crear personaje',
       failedToLevelUp: 'Error al confirmar subida de nivel',
       failedToUpdateRecap: 'Error al actualizar resumen',
+      failedToSaveSession: 'Error al guardar sesión',
       apiKeyRequired: 'Se requiere clave de API',
       invalidDiceNotation: 'Notación de dados inválida',
     },
