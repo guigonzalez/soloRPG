@@ -51,11 +51,18 @@ export function buildSystemPrompt(
       })
       .join(', ');
 
+    // Build background info if available
+    const backgroundInfo = [];
+    if (character.backstory) backgroundInfo.push(`Background: ${character.backstory}`);
+    if (character.personality) backgroundInfo.push(`Personality: ${character.personality}`);
+    if (character.goals) backgroundInfo.push(`Goals: ${character.goals}`);
+    if (character.fears) backgroundInfo.push(`Fears: ${character.fears}`);
+
     characterDisplay = `
 Player Character:
 - Name: ${character.name}
 - Level: ${character.level} (${character.experience} XP)
-- Attributes: ${attrs}
+- Attributes: ${attrs}${backgroundInfo.length > 0 ? '\n- ' + backgroundInfo.join('\n- ') : ''}
 `;
   }
 
@@ -102,20 +109,27 @@ ${facts.map(f => `- ${f.predicate}: ${f.object}`).join('\n')}
   // R - Rules
   const characterRules = character
     ? `
-2. **Character Attributes**: Consider the character's capabilities when:
+2. **Character Identity**: Use the character's background to inform the story:
+   - Reference their backstory when relevant situations arise
+   - Create opportunities that align with or challenge their goals
+   - Introduce elements that relate to their fears for dramatic tension
+   - Suggest actions that fit their personality traits
+   - Let their background influence NPC reactions and story developments
+
+3. **Character Attributes**: Consider the character's capabilities when:
    - Setting difficulty classes (adjust based on character level and attributes)
    - Suggesting appropriate actions (align with character strengths)
    - Narrating outcomes (reflect how attributes affect success/failure)
    - Suggested actions should include attribute modifiers when relevant:
      Example: <action id="1" label="Attack (STR)" roll="1d20+STR" dc="14">I attack with my sword</action>
 
-3. **Experience Awards**: You MAY award experience points for significant achievements:
+4. **Experience Awards**: You MAY award experience points for significant achievements:
    - Story milestones, quest completion, clever solutions
    - Use the tag: <xp_award>25</xp_award> (typically 25-100 XP for major accomplishments)
    - Do NOT award XP for every action - save it for meaningful moments
    - Successful dice rolls already award XP automatically
 
-4. **Character HP and Resources**: You can directly apply damage, healing, and resource changes:
+5. **Character HP and Resources**: You can directly apply damage, healing, and resource changes:
    - **Damage**: <damage>5</damage> - Apply 5 damage to character (combat, traps, falls)
    - **Healing**: <heal>10</heal> - Restore 10 HP (potions, spells, rest)
    - **Spend Resource**: <spend_resource name="Sanity">3</spend_resource> - Character loses 3 Sanity (horror, spells)
@@ -128,22 +142,22 @@ ${facts.map(f => `- ${f.predicate}: ${f.object}`).join('\n')}
      * "The eldritch horror's gaze burns into your mind. <spend_resource name="Sanity">5</spend_resource>"
      * "You meditate and restore your inner energy. <restore_resource name="Magic Points">10</restore_resource>"
 
-5. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
+6. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:
    - First, present the situation and ask "What do you do?"
    - Wait for the player to describe their action
    - THEN, if their action is risky/uncertain, request a dice roll
    - Format: "Roll to [their specific action]. (DC: X)"
    - Never request a roll before the player declares their action
 
-6. **Consequences Matter**: Both success and failure should advance the story in interesting ways
+7. **Consequences Matter**: Both success and failure should advance the story in interesting ways
 
-7. **Consistency**: Reference and respect the established entities and facts above
+8. **Consistency**: Reference and respect the established entities and facts above
 
-8. **No Railroading**: Present situations, but let the player decide their actions
+9. **No Railroading**: Present situations, but let the player decide their actions
 
-9. **New Information**: When introducing significant new characters, places, or items, describe them clearly
+10. **New Information**: When introducing significant new characters, places, or items, describe them clearly
 
-10. **Stay in Theme**: All narration should fit the campaign theme and tone
+11. **Stay in Theme**: All narration should fit the campaign theme and tone
 `
     : `
 2. **Dice Rolling Flow**: IMPORTANT - Follow this sequence:

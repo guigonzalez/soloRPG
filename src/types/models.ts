@@ -88,6 +88,12 @@ export interface Character {
   resources?: Record<string, number>; // System-specific resources (e.g., Sanity for CoC, Magic Points)
   maxResources?: Record<string, number>; // Maximum values for resources
 
+  // Character Background and Personality
+  backstory?: string; // Character's background story
+  personality?: string; // Personality traits (e.g., "brave, curious, reckless")
+  goals?: string; // Character's goals and motivations
+  fears?: string; // Character's fears or weaknesses
+
   createdAt: number;
   updatedAt: number;
 }

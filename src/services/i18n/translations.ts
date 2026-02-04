@@ -68,6 +68,16 @@ export interface Translations {
     range: string;
     createCharacter: string;
     cancel: string;
+    nameRequired: string;
+    backgroundOptional: string;
+    backstory: string;
+    backstoryPlaceholder: string;
+    personality: string;
+    personalityPlaceholder: string;
+    goals: string;
+    goalsPlaceholder: string;
+    fears: string;
+    fearsPlaceholder: string;
   };
 
   // Character Panel
@@ -244,6 +254,16 @@ export const translations: Record<Language, Translations> = {
       range: 'Range',
       createCharacter: 'Create Character',
       cancel: 'Cancel',
+      nameRequired: 'Please enter a character name',
+      backgroundOptional: 'Character Background (Optional)',
+      backstory: 'Backstory',
+      backstoryPlaceholder: 'Who is your character? Where do they come from?',
+      personality: 'Personality',
+      personalityPlaceholder: 'E.g., brave, curious, reckless',
+      goals: 'Goals',
+      goalsPlaceholder: 'What does your character want to achieve?',
+      fears: 'Fears',
+      fearsPlaceholder: 'What does your character fear?',
     },
 
     characterPanel: {
@@ -409,6 +429,16 @@ export const translations: Record<Language, Translations> = {
       range: 'Intervalo',
       createCharacter: 'Criar Personagem',
       cancel: 'Cancelar',
+      nameRequired: 'Por favor, digite um nome para o personagem',
+      backgroundOptional: 'História do Personagem (Opcional)',
+      backstory: 'História',
+      backstoryPlaceholder: 'Quem é seu personagem? De onde ele vem?',
+      personality: 'Personalidade',
+      personalityPlaceholder: 'Ex.: corajoso, curioso, imprudente',
+      goals: 'Objetivos',
+      goalsPlaceholder: 'O que seu personagem quer alcançar?',
+      fears: 'Medos',
+      fearsPlaceholder: 'Do que seu personagem tem medo?',
     },
 
     characterPanel: {
@@ -574,6 +604,16 @@ export const translations: Record<Language, Translations> = {
       range: 'Rango',
       createCharacter: 'Crear Personaje',
       cancel: 'Cancelar',
+      nameRequired: 'Por favor, ingresa un nombre para el personaje',
+      backgroundOptional: 'Historia del Personaje (Opcional)',
+      backstory: 'Historia',
+      backstoryPlaceholder: '¿Quién es tu personaje? ¿De dónde viene?',
+      personality: 'Personalidad',
+      personalityPlaceholder: 'Ej.: valiente, curioso, imprudente',
+      goals: 'Objetivos',
+      goalsPlaceholder: '¿Qué quiere lograr tu personaje?',
+      fears: 'Miedos',
+      fearsPlaceholder: '¿A qué le teme tu personaje?',
     },
 
     characterPanel: {

@@ -37,7 +37,14 @@ export function useCharacter(campaignId: string | null, _campaignSystem: string)
   /**
    * Create a new character for the campaign
    */
-  async function handleCreateCharacter(name: string, attributes: Record<string, number>) {
+  async function handleCreateCharacter(
+    name: string,
+    attributes: Record<string, number>,
+    backstory?: string,
+    personality?: string,
+    goals?: string,
+    fears?: string
+  ) {
     if (!campaignId) {
       throw new Error('No active campaign');
     }
@@ -81,6 +88,10 @@ export function useCharacter(campaignId: string | null, _campaignSystem: string)
         maxHitPoints: maxHP,
         resources,
         maxResources,
+        backstory,
+        personality,
+        goals,
+        fears,
       });
 
       return newCharacter;

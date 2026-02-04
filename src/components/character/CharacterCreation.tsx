@@ -7,7 +7,14 @@ import { t } from '../../services/i18n/use-i18n';
 interface CharacterCreationProps {
   campaignSystem: string;
   campaignTheme: string;
-  onConfirm: (name: string, attributes: Record<string, number>) => void;
+  onConfirm: (
+    name: string,
+    attributes: Record<string, number>,
+    backstory?: string,
+    personality?: string,
+    goals?: string,
+    fears?: string
+  ) => void;
   onCancel: () => void;
 }
 
@@ -52,6 +59,12 @@ export function CharacterCreation({
     return initial;
   });
 
+  // Backstory and personality fields
+  const [backstory, setBackstory] = useState<string>('');
+  const [personality, setPersonality] = useState<string>('');
+  const [goals, setGoals] = useState<string>('');
+  const [fears, setFears] = useState<string>('');
+
   // Handle attribute change with validation
   const handleAttributeChange = (attrName: string, delta: number) => {
     const attrDef = template.attributes.find(a => a.name === attrName);
@@ -92,11 +105,18 @@ export function CharacterCreation({
   // Handle confirm
   const handleConfirm = () => {
     if (!characterName.trim()) {
-      alert('Please enter a character name');
+      alert(t('characterCreation.nameRequired'));
       return;
     }
 
-    onConfirm(characterName.trim(), attributes);
+    onConfirm(
+      characterName.trim(),
+      attributes,
+      backstory.trim() || undefined,
+      personality.trim() || undefined,
+      goals.trim() || undefined,
+      fears.trim() || undefined
+    );
   };
 
   return (
@@ -286,6 +306,134 @@ export function CharacterCreation({
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Backstory and Personality (Optional) */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              fontSize: '14px',
+              color: '#9cd84e',
+              marginBottom: '12px',
+            }}>
+              {t('characterCreation.backgroundOptional')}
+            </div>
+
+            {/* Backstory */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                marginBottom: '6px',
+                color: '#9cd84e',
+              }}>
+                {t('characterCreation.backstory')}
+              </label>
+              <textarea
+                value={backstory}
+                onChange={(e) => setBackstory(e.target.value)}
+                placeholder={t('characterCreation.backstoryPlaceholder')}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  backgroundColor: '#0f380f',
+                  color: '#9cd84e',
+                  border: '2px solid #9cd84e',
+                  borderRadius: '0',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                }}
+              />
+            </div>
+
+            {/* Personality */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                marginBottom: '6px',
+                color: '#9cd84e',
+              }}>
+                {t('characterCreation.personality')}
+              </label>
+              <input
+                type="text"
+                value={personality}
+                onChange={(e) => setPersonality(e.target.value)}
+                placeholder={t('characterCreation.personalityPlaceholder')}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  backgroundColor: '#0f380f',
+                  color: '#9cd84e',
+                  border: '2px solid #9cd84e',
+                  borderRadius: '0',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Goals */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                marginBottom: '6px',
+                color: '#9cd84e',
+              }}>
+                {t('characterCreation.goals')}
+              </label>
+              <input
+                type="text"
+                value={goals}
+                onChange={(e) => setGoals(e.target.value)}
+                placeholder={t('characterCreation.goalsPlaceholder')}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  backgroundColor: '#0f380f',
+                  color: '#9cd84e',
+                  border: '2px solid #9cd84e',
+                  borderRadius: '0',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Fears */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                marginBottom: '6px',
+                color: '#9cd84e',
+              }}>
+                {t('characterCreation.fears')}
+              </label>
+              <input
+                type="text"
+                value={fears}
+                onChange={(e) => setFears(e.target.value)}
+                placeholder={t('characterCreation.fearsPlaceholder')}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  backgroundColor: '#0f380f',
+                  color: '#9cd84e',
+                  border: '2px solid #9cd84e',
+                  borderRadius: '0',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
           </div>
 
