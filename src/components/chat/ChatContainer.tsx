@@ -3,6 +3,7 @@ import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { DiceRoll } from './DiceRoll';
 import { Loading } from '../common/Loading';
+import { t } from '../../services/i18n/use-i18n';
 import type { Message, Roll, SuggestedAction } from '../../types/models';
 
 interface ChatContainerProps {
@@ -59,10 +60,10 @@ export function ChatContainer({
             color: 'var(--color-text-secondary)'
           }}>
             <div style={{ fontSize: '16px', marginBottom: '16px' }}>
-              Your adventure begins...
+              {t('chat.adventureBegins')}
             </div>
             <div style={{ fontSize: '14px' }}>
-              Describe your first action below
+              {t('chat.firstActionPrompt')}
             </div>
           </div>
         )}
@@ -92,7 +93,7 @@ export function ChatContainer({
         {isAIResponding && streamedContent && (
           <div className="chat-message ai">
             <div style={{ marginBottom: '4px', fontSize: '12px', opacity: 0.7 }}>
-              NARRATOR · typing...
+              {t('chat.narratorTyping')}
             </div>
             <div style={{ whiteSpace: 'pre-wrap' }}>
               {streamedContent}
@@ -104,7 +105,7 @@ export function ChatContainer({
         {/* Loading indicator without streamed content yet */}
         {isAIResponding && !streamedContent && (
           <div style={{ padding: '16px' }}>
-            <Loading message="Narrator is thinking" />
+            <Loading message={t('chat.narratorThinking')} />
           </div>
         )}
 

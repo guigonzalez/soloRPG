@@ -1,3 +1,4 @@
+import { t } from '../../services/i18n/use-i18n';
 import type { Recap } from '../../types/models';
 
 interface RecapPanelProps {
@@ -21,7 +22,7 @@ export function RecapPanel({ recap, onUpdateRecap, isUpdating }: RecapPanelProps
           textTransform: 'uppercase',
           letterSpacing: '1px'
         }}>
-          Story So Far
+          {t('recapPanel.title')}
         </div>
         <button
           className="retro-button"
@@ -33,7 +34,7 @@ export function RecapPanel({ recap, onUpdateRecap, isUpdating }: RecapPanelProps
             minWidth: 'auto'
           }}
         >
-          {isUpdating ? 'Updating...' : 'Update'}
+          {isUpdating ? t('recapPanel.updating') : t('recapPanel.update')}
         </button>
       </div>
 
@@ -44,7 +45,7 @@ export function RecapPanel({ recap, onUpdateRecap, isUpdating }: RecapPanelProps
           fontSize: '14px',
           padding: '20px'
         }}>
-          Click "Update" to generate a story recap from your adventure...
+          {t('recapPanel.clickUpdate')}
         </div>
       ) : (
         <div className="recap-container" style={{

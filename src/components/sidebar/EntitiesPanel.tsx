@@ -1,3 +1,4 @@
+import { t } from '../../services/i18n/use-i18n';
 import type { Entity } from '../../types/models';
 
 interface EntitiesPanelProps {
@@ -15,12 +16,12 @@ export function EntitiesPanel({ entities }: EntitiesPanelProps) {
         border: '2px solid var(--color-border)',
         backgroundColor: 'var(--color-bg-secondary)'
       }}>
-        Characters, places, and items you encounter will appear here...
+        {t('entitiesPanel.empty')}
         <div style={{
           marginTop: '12px',
           fontSize: '12px'
         }}>
-          Click "Update" in the Recap tab to extract entities from your adventure!
+          {t('entitiesPanel.updateHint')}
         </div>
       </div>
     );

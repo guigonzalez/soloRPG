@@ -1,4 +1,5 @@
 import { Button } from '../common/Button';
+import { t } from '../../services/i18n/use-i18n';
 import type { SuggestedAction } from '../../types/models';
 
 interface SuggestedActionsProps {
@@ -26,7 +27,7 @@ export function SuggestedActions({ actions, onSelectAction, disabled }: Suggeste
         textTransform: 'uppercase',
         letterSpacing: '1px',
       }}>
-        Suggested Actions
+        {t('chat.suggestedActions')}
       </div>
       <div style={{
         display: 'flex',
@@ -53,7 +54,7 @@ export function SuggestedActions({ actions, onSelectAction, disabled }: Suggeste
                   opacity: 0.7,
                   marginLeft: '8px',
                 }}>
-                  🎲 {action.rollNotation} {action.dc ? `DC ${action.dc}` : ''}
+                  🎲 {action.rollNotation} {action.dc ? `${t('chat.dc')} ${action.dc}` : ''}
                 </span>
               )}
             </div>

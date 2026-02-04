@@ -96,14 +96,17 @@ export interface Translations {
   recapPanel: {
     title: string;
     noRecap: string;
-    updateRecap: string;
+    update: string;
     updating: string;
+    clickUpdate: string;
   };
 
   // Entities Panel
   entitiesPanel: {
     title: string;
     noEntities: string;
+    empty: string;
+    updateHint: string;
     character: string;
     npc: string;
     place: string;
@@ -119,6 +122,10 @@ export interface Translations {
     suggestedActions: string;
     rolled: string;
     dc: string;
+    adventureBegins: string;
+    firstActionPrompt: string;
+    narratorTyping: string;
+    narratorThinking: string;
   };
 
   // XP System
@@ -246,13 +253,16 @@ export const translations: Record<Language, Translations> = {
     recapPanel: {
       title: 'Story So Far',
       noRecap: 'No recap yet. The adventure begins...',
-      updateRecap: 'Update Recap',
+      update: 'Update',
       updating: 'Updating...',
+      clickUpdate: 'Click "Update" to generate a story recap from your adventure...',
     },
 
     entitiesPanel: {
       title: 'Known Entities',
       noEntities: 'No entities discovered yet',
+      empty: 'Characters, places, and items you encounter will appear here...',
+      updateHint: 'Click "Update" in the Recap tab to extract entities from your adventure!',
       character: 'Character',
       npc: 'NPC',
       place: 'Place',
@@ -267,6 +277,10 @@ export const translations: Record<Language, Translations> = {
       suggestedActions: 'Suggested Actions',
       rolled: 'Rolled',
       dc: 'DC',
+      adventureBegins: 'Your adventure begins...',
+      firstActionPrompt: 'Describe your first action below',
+      narratorTyping: 'NARRATOR · typing...',
+      narratorThinking: 'Narrator is thinking',
     },
 
     xp: {
@@ -390,13 +404,16 @@ export const translations: Record<Language, Translations> = {
     recapPanel: {
       title: 'História Até Agora',
       noRecap: 'Nenhum resumo ainda. A aventura começa...',
-      updateRecap: 'Atualizar Resumo',
+      update: 'Atualizar',
       updating: 'Atualizando...',
+      clickUpdate: 'Clique em "Atualizar" para gerar um resumo da história da sua aventura...',
     },
 
     entitiesPanel: {
       title: 'Entidades Conhecidas',
       noEntities: 'Nenhuma entidade descoberta ainda',
+      empty: 'Personagens, locais e itens que você encontrar aparecerão aqui...',
+      updateHint: 'Clique em "Atualizar" na aba Resumo para extrair entidades da sua aventura!',
       character: 'Personagem',
       npc: 'NPC',
       place: 'Local',
@@ -411,6 +428,10 @@ export const translations: Record<Language, Translations> = {
       suggestedActions: 'Ações Sugeridas',
       rolled: 'Rolou',
       dc: 'CD',
+      adventureBegins: 'Sua aventura começa...',
+      firstActionPrompt: 'Descreva sua primeira ação abaixo',
+      narratorTyping: 'NARRADOR · digitando...',
+      narratorThinking: 'Narrador está pensando',
     },
 
     xp: {
@@ -534,13 +555,16 @@ export const translations: Record<Language, Translations> = {
     recapPanel: {
       title: 'Historia Hasta Ahora',
       noRecap: 'No hay resumen aún. La aventura comienza...',
-      updateRecap: 'Actualizar Resumen',
+      update: 'Actualizar',
       updating: 'Actualizando...',
+      clickUpdate: 'Haz clic en "Actualizar" para generar un resumen de la historia de tu aventura...',
     },
 
     entitiesPanel: {
       title: 'Entidades Conocidas',
       noEntities: 'No se han descubierto entidades aún',
+      empty: 'Los personajes, lugares y objetos que encuentres aparecerán aquí...',
+      updateHint: '¡Haz clic en "Actualizar" en la pestaña Resumen para extraer entidades de tu aventura!',
       character: 'Personaje',
       npc: 'PNJ',
       place: 'Lugar',
@@ -555,6 +579,10 @@ export const translations: Record<Language, Translations> = {
       suggestedActions: 'Acciones Sugeridas',
       rolled: 'Tiró',
       dc: 'CD',
+      adventureBegins: 'Tu aventura comienza...',
+      firstActionPrompt: 'Describe tu primera acción abajo',
+      narratorTyping: 'NARRADOR · escribiendo...',
+      narratorThinking: 'Narrador está pensando',
     },
 
     xp: {
