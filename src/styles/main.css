@@ -3,6 +3,7 @@
  */
 
 @import './retro.css';
+@import './character.css';
 
 /* Layout */
 #root {

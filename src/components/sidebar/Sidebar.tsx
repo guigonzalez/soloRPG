@@ -1,17 +1,20 @@
 import { RecapPanel } from './RecapPanel';
 import { EntitiesPanel } from './EntitiesPanel';
+import { CharacterPanel } from './CharacterPanel';
 import { useUIStore } from '../../store/ui-store';
-import type { Recap, Entity } from '../../types/models';
+import type { Recap, Entity, Character } from '../../types/models';
 
 interface SidebarProps {
   recap: Recap | null;
   entities: Entity[];
+  character: Character | null;
+  campaignSystem: string;
   onEndSession: () => void;
   onUpdateRecap: () => void;
   isUpdatingRecap: boolean;
 }
 
-export function Sidebar({ recap, entities, onEndSession, onUpdateRecap, isUpdatingRecap }: SidebarProps) {
+export function Sidebar({ recap, entities, character, campaignSystem, onEndSession, onUpdateRecap, isUpdatingRecap }: SidebarProps) {
   const { activePanel, setActivePanel } = useUIStore();
 
   return (
@@ -47,6 +50,12 @@ export function Sidebar({ recap, entities, onEndSession, onUpdateRecap, isUpdati
 
       <div className="sidebar-tabs">
         <button
+          className={`sidebar-tab ${activePanel === 'character' ? 'active' : ''}`}
+          onClick={() => setActivePanel('character')}
+        >
+          Character
+        </button>
+        <button
           className={`sidebar-tab ${activePanel === 'recap' ? 'active' : ''}`}
           onClick={() => setActivePanel('recap')}
         >
@@ -61,6 +70,9 @@ export function Sidebar({ recap, entities, onEndSession, onUpdateRecap, isUpdati
       </div>
 
       <div className="sidebar-content">
+        {activePanel === 'character' && character && (
+          <CharacterPanel character={character} campaignSystem={campaignSystem} />
+        )}
         {activePanel === 'recap' && (
           <RecapPanel
             recap={recap}

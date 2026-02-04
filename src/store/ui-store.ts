@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type ActivePanel = 'recap' | 'entities';
+type ActivePanel = 'character' | 'recap' | 'entities';
 
 interface UIStore {
   sidebarOpen: boolean;
@@ -16,7 +16,7 @@ interface UIStore {
 
 export const useUIStore = create<UIStore>((set) => ({
   sidebarOpen: true,
-  activePanel: 'recap',
+  activePanel: 'character',
   theme: '8bit-green',
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),

@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
-import type { Campaign, Message, Recap, Entity, Fact, Roll } from '../../types/models';
+import type { Campaign, Message, Recap, Entity, Fact, Roll, Character } from '../../types/models';
 
 /**
  * IndexedDB Schema for SoloRPG
@@ -55,10 +55,17 @@ interface SoloRPGDB extends DBSchema {
       'campaignCreatedAt': [string, number];
     };
   };
+  characters: {
+    key: string;
+    value: Character;
+    indexes: {
+      'campaignId': string; // One character per campaign (unique constraint enforced in repo)
+    };
+  };
 }
 
 const DB_NAME = import.meta.env.VITE_DB_NAME || 'solo-rpg-db';
-const DB_VERSION = parseInt(import.meta.env.VITE_DB_VERSION || '1', 10);
+const DB_VERSION = parseInt(import.meta.env.VITE_DB_VERSION || '2', 10); // Version 2: Added characters store
 
 let dbInstance: IDBPDatabase<SoloRPGDB> | null = null;
 
@@ -108,8 +115,14 @@ export async function getDB(): Promise<IDBPDatabase<SoloRPGDB>> {
         rollStore.createIndex('campaignCreatedAt', ['campaignId', 'createdAt']);
       }
 
+      // Version 2: Add characters store
+      if (oldVersion < 2) {
+        const characterStore = db.createObjectStore('characters', { keyPath: 'id' });
+        characterStore.createIndex('campaignId', 'campaignId');
+      }
+
       // Future migrations go here
-      // if (oldVersion < 2) { ... }
+      // if (oldVersion < 3) { ... }
     },
     blocked() {
       console.warn('Database upgrade blocked. Close other tabs with this app.');

@@ -4,11 +4,13 @@ import { ChatContainer } from './components/chat/ChatContainer';
 import { Sidebar } from './components/sidebar/Sidebar';
 import { ApiKeySetup } from './components/common/ApiKeySetup';
 import { SettingsModal } from './components/common/SettingsModal';
+import { CharacterCreation } from './components/character/CharacterCreation';
 import { useCampaignStore } from './store/campaign-store';
 import { useChatStore } from './store/chat-store';
 import { useMessages } from './hooks/useMessages';
 import { useRolls } from './hooks/useRolls';
 import { useAI } from './hooks/useAI';
+import { useCharacter } from './hooks/useCharacter';
 import { hasApiKey } from './services/storage/api-key-storage';
 import { extractMemory } from './services/ai/memory-extractor';
 import * as recapRepo from './services/storage/recap-repo';
@@ -35,6 +37,12 @@ function App() {
   // Load messages and rolls for active campaign
   const { messages } = useMessages(activeCampaignId);
   const { rolls } = useRolls(activeCampaignId);
+
+  // Load character for active campaign (will be used in Phase 5 for character panel)
+  const { character: _character, needsCharacterCreation, handleCreateCharacter } = useCharacter(
+    activeCampaignId,
+    activeCampaign?.system || 'Generic'
+  );
 
   // Use real AI
   const { sendMessage, sendActionWithRoll, startCampaign } = useAI(activeCampaignId);
@@ -216,6 +224,16 @@ function App() {
     }
   };
 
+  const handleCharacterCreation = async (name: string, attributes: Record<string, number>) => {
+    try {
+      await handleCreateCharacter(name, attributes);
+      // Character is now created, component will re-render
+    } catch (err) {
+      console.error('Failed to create character:', err);
+      alert('Failed to create character: ' + (err as Error).message);
+    }
+  };
+
   const handleEndSession = async () => {
     if (!activeCampaignId || !activeCampaign) return;
 
@@ -277,6 +295,18 @@ function App() {
     return <CampaignList onSelectCampaign={handleSelectCampaign} />;
   }
 
+  // Show character creation modal if character doesn't exist
+  if (needsCharacterCreation) {
+    return (
+      <CharacterCreation
+        campaignSystem={activeCampaign.system}
+        campaignTheme={activeCampaign.theme}
+        onConfirm={handleCharacterCreation}
+        onCancel={handleBackToCampaigns}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -308,6 +338,8 @@ function App() {
       <Sidebar
         recap={recap}
         entities={entities}
+        character={_character}
+        campaignSystem={activeCampaign.system}
         onEndSession={handleEndSession}
         onUpdateRecap={handleUpdateRecap}
         isUpdatingRecap={isUpdatingRecap}

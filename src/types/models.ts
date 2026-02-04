@@ -69,9 +69,26 @@ export interface SuggestedAction {
   dc?: number; // Optional difficulty class for the roll
 }
 
+/**
+ * Player character with attributes and progression
+ */
+export interface Character {
+  id: string;
+  campaignId: string; // One character per campaign
+  name: string;
+  level: number; // Current level (starts at 1)
+  experience: number; // Current XP
+  attributes: Record<string, number>; // Dynamic attributes based on system
+  // Example D&D: { strength: 10, dexterity: 12, constitution: 11, intelligence: 16, wisdom: 13, charisma: 8 }
+  // Example CoC: { STR: 55, DEX: 60, INT: 70, CON: 50, SIZ: 65, APP: 50, POW: 60, EDU: 65 }
+  createdAt: number;
+  updatedAt: number;
+}
+
 // Helper types for creation (without generated fields)
 export type NewCampaign = Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'>;
 export type NewMessage = Omit<Message, 'id' | 'createdAt'>;
 export type NewEntity = Omit<Entity, 'id' | 'lastSeenAt'>;
 export type NewFact = Omit<Fact, 'id' | 'createdAt'>;
 export type NewRoll = Omit<Roll, 'id' | 'createdAt'>;
+export type NewCharacter = Omit<Character, 'id' | 'createdAt' | 'updatedAt'>;
