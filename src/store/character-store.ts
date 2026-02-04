@@ -19,6 +19,13 @@ interface CharacterStore {
   incrementAttribute: (attributeName: string, incrementBy?: number) => Promise<void>;
   confirmLevelUp: () => void;
   clearCharacter: () => void;
+
+  // HP and Resource management
+  takeDamage: (damage: number) => Promise<void>;
+  heal: (amount: number) => Promise<void>;
+  updateResource: (resourceName: string, amount: number) => Promise<void>;
+  restoreResource: (resourceName: string, amount: number) => Promise<void>;
+  fullRest: () => Promise<void>; // Restore all HP and resources
 }
 
 export const useCharacterStore = create<CharacterStore>((set, get) => ({
@@ -150,5 +157,108 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
       attributePointsAvailable: 0,
       error: null,
     });
+  },
+
+  /**
+   * Apply damage to character
+   */
+  takeDamage: async (damage: number) => {
+    const { character } = get();
+    if (!character) {
+      throw new Error('No character loaded');
+    }
+
+    const newHP = Math.max(0, character.hitPoints - damage);
+    const updatedCharacter = await characterRepo.updateCharacterHP(character.id, newHP);
+
+    set({ character: updatedCharacter });
+  },
+
+  /**
+   * Heal character
+   */
+  heal: async (amount: number) => {
+    const { character } = get();
+    if (!character) {
+      throw new Error('No character loaded');
+    }
+
+    const newHP = Math.min(character.maxHitPoints, character.hitPoints + amount);
+    const updatedCharacter = await characterRepo.updateCharacterHP(character.id, newHP);
+
+    set({ character: updatedCharacter });
+  },
+
+  /**
+   * Spend/use a resource
+   */
+  updateResource: async (resourceName: string, amount: number) => {
+    const { character } = get();
+    if (!character || !character.resources || !character.maxResources) {
+      throw new Error('No character or resources available');
+    }
+
+    const currentValue = character.resources[resourceName] || 0;
+    const maxValue = character.maxResources[resourceName] || 0;
+    const newValue = Math.max(0, Math.min(maxValue, currentValue + amount));
+
+    const updatedCharacter = await characterRepo.updateCharacterResource(
+      character.id,
+      resourceName,
+      newValue
+    );
+
+    set({ character: updatedCharacter });
+  },
+
+  /**
+   * Restore a resource (positive amount only)
+   */
+  restoreResource: async (resourceName: string, amount: number) => {
+    const { character } = get();
+    if (!character || !character.resources || !character.maxResources) {
+      throw new Error('No character or resources available');
+    }
+
+    const currentValue = character.resources[resourceName] || 0;
+    const maxValue = character.maxResources[resourceName] || 0;
+    const newValue = Math.min(maxValue, currentValue + Math.abs(amount));
+
+    const updatedCharacter = await characterRepo.updateCharacterResource(
+      character.id,
+      resourceName,
+      newValue
+    );
+
+    set({ character: updatedCharacter });
+  },
+
+  /**
+   * Full rest - restore all HP and resources
+   */
+  fullRest: async () => {
+    const { character } = get();
+    if (!character) {
+      throw new Error('No character loaded');
+    }
+
+    // Restore HP to max
+    let updatedCharacter = await characterRepo.updateCharacterHP(
+      character.id,
+      character.maxHitPoints
+    );
+
+    // Restore all resources to max
+    if (character.maxResources) {
+      for (const [resourceName, maxValue] of Object.entries(character.maxResources)) {
+        updatedCharacter = await characterRepo.updateCharacterResource(
+          character.id,
+          resourceName,
+          maxValue
+        );
+      }
+    }
+
+    set({ character: updatedCharacter });
   },
 }));

@@ -43,12 +43,44 @@ export function useCharacter(campaignId: string | null, _campaignSystem: string)
     }
 
     try {
+      // Import getSystemTemplate to calculate HP
+      const { getSystemTemplate } = await import('../services/game/attribute-templates');
+      const template = getSystemTemplate(_campaignSystem);
+
+      // Create temp character object to calculate HP
+      const tempChar = {
+        id: '',
+        campaignId,
+        name,
+        level: 1,
+        experience: 0,
+        attributes,
+        hitPoints: 0,
+        maxHitPoints: 0,
+        createdAt: 0,
+        updatedAt: 0,
+      };
+
+      // Calculate HP and resources
+      const maxHP = template.calculateMaxHP(tempChar, 1);
+      let resources: Record<string, number> | undefined;
+      let maxResources: Record<string, number> | undefined;
+
+      if (template.resources && template.calculateMaxResources) {
+        maxResources = template.calculateMaxResources(tempChar, 1);
+        resources = { ...maxResources };
+      }
+
       const newCharacter = await createCharacter({
         campaignId,
         name,
         level: 1,
         experience: 0,
         attributes,
+        hitPoints: maxHP,
+        maxHitPoints: maxHP,
+        resources,
+        maxResources,
       });
 
       return newCharacter;

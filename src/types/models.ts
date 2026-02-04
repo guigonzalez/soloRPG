@@ -81,6 +81,13 @@ export interface Character {
   attributes: Record<string, number>; // Dynamic attributes based on system
   // Example D&D: { strength: 10, dexterity: 12, constitution: 11, intelligence: 16, wisdom: 13, charisma: 8 }
   // Example CoC: { STR: 55, DEX: 60, INT: 70, CON: 50, SIZ: 65, APP: 50, POW: 60, EDU: 65 }
+
+  // Health and Resources (system-specific)
+  hitPoints: number; // Current HP
+  maxHitPoints: number; // Maximum HP
+  resources?: Record<string, number>; // System-specific resources (e.g., Sanity for CoC, Magic Points)
+  maxResources?: Record<string, number>; // Maximum values for resources
+
   createdAt: number;
   updatedAt: number;
 }

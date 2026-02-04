@@ -143,3 +143,32 @@ export async function deleteCharactersByCampaign(campaignId: string): Promise<vo
     await db.delete('characters', character.id);
   }
 }
+
+/**
+ * Update character HP
+ */
+export async function updateCharacterHP(id: string, hitPoints: number): Promise<Character> {
+  return await updateCharacter(id, { hitPoints });
+}
+
+/**
+ * Update a specific resource value
+ */
+export async function updateCharacterResource(
+  id: string,
+  resourceName: string,
+  value: number
+): Promise<Character> {
+  const character = await getCharacterById(id);
+
+  if (!character) {
+    throw new Error(`Character ${id} not found`);
+  }
+
+  const updatedResources = {
+    ...(character.resources || {}),
+    [resourceName]: value,
+  };
+
+  return await updateCharacter(id, { resources: updatedResources });
+}

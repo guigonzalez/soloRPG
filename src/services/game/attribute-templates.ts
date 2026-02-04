@@ -14,6 +14,16 @@ export interface AttributeDefinition {
 }
 
 /**
+ * Definition of a system-specific resource (HP, Sanity, etc.)
+ */
+export interface ResourceDefinition {
+  name: string; // Internal name (e.g., 'sanity', 'magicPoints')
+  displayName: string; // Display name (e.g., 'Sanity', 'MP')
+  description: string; // What this resource represents
+  color?: string; // Display color (e.g., '#9cd84e' for HP, '#6495ed' for Sanity)
+}
+
+/**
  * Complete template for an RPG system
  */
 export interface SystemTemplate {
@@ -22,6 +32,13 @@ export interface SystemTemplate {
   modifierCalculation?: (value: number) => number; // For D&D-style modifiers
   levelUpPoints: number; // Attribute points gained per level
   experienceTable: number[]; // XP required for each level (moderate progression)
+
+  // HP calculation
+  calculateMaxHP: (character: Character, level: number) => number;
+
+  // Additional resources (e.g., Sanity for CoC, Magic Points)
+  resources?: ResourceDefinition[];
+  calculateMaxResources?: (character: Character, level: number) => Record<string, number>;
 }
 
 /**
@@ -83,6 +100,15 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: (value) => Math.floor((value - 10) / 2),
     levelUpPoints: 1, // 1 attribute point every 4 levels (simplified)
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: 8 + CON modifier at level 1, then +5 + CON modifier per level
+    calculateMaxHP: (character, level) => {
+      const conMod = Math.floor((character.attributes.constitution - 10) / 2);
+      if (level === 1) {
+        return 8 + conMod;
+      }
+      return 8 + conMod + (level - 1) * (5 + conMod);
+    },
   },
 
   'Pathfinder 2e': {
@@ -140,6 +166,15 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: (value) => Math.floor((value - 10) / 2),
     levelUpPoints: 1,
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: Similar to D&D 5e
+    calculateMaxHP: (character, level) => {
+      const conMod = Math.floor((character.attributes.constitution - 10) / 2);
+      if (level === 1) {
+        return 8 + conMod;
+      }
+      return 8 + conMod + (level - 1) * (5 + conMod);
+    },
   },
 
   'Call of Cthulhu': {
@@ -213,6 +248,37 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: undefined, // Percentage-based system
     levelUpPoints: 2, // Increase 2 attributes per milestone
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: (CON + SIZ) / 10, rounded up
+    calculateMaxHP: (character) => {
+      const con = character.attributes.CON || 50;
+      const siz = character.attributes.SIZ || 50;
+      return Math.ceil((con + siz) / 10);
+    },
+
+    // Call of Cthulhu specific resources
+    resources: [
+      {
+        name: 'sanity',
+        displayName: 'Sanity',
+        description: 'Mental stability and resistance to cosmic horror',
+        color: '#6495ed', // Cornflower blue
+      },
+      {
+        name: 'magicPoints',
+        displayName: 'Magic Points',
+        description: 'Power available for casting spells',
+        color: '#9370db', // Medium purple
+      },
+    ],
+
+    calculateMaxResources: (character) => {
+      const pow = character.attributes.POW || 50;
+      return {
+        sanity: pow, // Starting Sanity = POW
+        magicPoints: Math.floor(pow / 5), // Magic Points = POW / 5
+      };
+    },
   },
 
   'Cyberpunk RED': {
@@ -302,6 +368,12 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: (value) => value - 5, // Simple modifier (value - 5)
     levelUpPoints: 1,
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: 10 + (BODY × 5)
+    calculateMaxHP: (character, level) => {
+      const body = character.attributes.body || 5;
+      return 10 + (body * 5) + ((level - 1) * 5);
+    },
   },
 
   'Vampire: The Masquerade': {
@@ -386,6 +458,29 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: undefined, // Dot-based system
     levelUpPoints: 1,
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: Stamina + Size (simplified - VtM uses Health Levels)
+    calculateMaxHP: (character) => {
+      const stamina = character.attributes.stamina || 2;
+      // Simplified: 3 + (Stamina × 2)
+      return 3 + (stamina * 2);
+    },
+
+    // Vampire-specific: Blood Points
+    resources: [
+      {
+        name: 'bloodPoints',
+        displayName: 'Blood Points',
+        description: 'Vitae for vampiric powers',
+        color: '#8b0000', // Dark red
+      },
+    ],
+
+    calculateMaxResources: () => {
+      return {
+        bloodPoints: 10, // Standard starting blood pool
+      };
+    },
   },
 
   'Generic': {
@@ -427,6 +522,12 @@ export const attributeTemplates: Record<string, SystemTemplate> = {
     modifierCalculation: (value) => Math.floor((value - 10) / 2),
     levelUpPoints: 2,
     experienceTable: [0, 600, 1800, 4200, 8400, 15000, 24000, 35000, 48000, 64000],
+
+    // HP calculation: Simple formula based on Strength
+    calculateMaxHP: (character, level) => {
+      const strengthMod = Math.floor((character.attributes.strength - 10) / 2);
+      return 10 + strengthMod + (level - 1) * (5 + strengthMod);
+    },
   },
 };
 
@@ -454,16 +555,33 @@ export function createInitialCharacter(
     attributes[attr.name] = attr.defaultValue;
   });
 
-  return {
+  // Create temporary character object for HP calculation
+  const tempCharacter: Character = {
     id: ulid(),
     campaignId,
     name: name || 'Adventurer',
     level: 1,
     experience: 0,
     attributes,
+    hitPoints: 0, // Will be calculated
+    maxHitPoints: 0, // Will be calculated
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
+
+  // Calculate max HP based on system template
+  const maxHP = template.calculateMaxHP(tempCharacter, 1);
+  tempCharacter.maxHitPoints = maxHP;
+  tempCharacter.hitPoints = maxHP; // Start at full HP
+
+  // Calculate resources if system has them
+  if (template.resources && template.calculateMaxResources) {
+    const maxResources = template.calculateMaxResources(tempCharacter, 1);
+    tempCharacter.maxResources = maxResources;
+    tempCharacter.resources = { ...maxResources }; // Start at full resources
+  }
+
+  return tempCharacter;
 }
 
 /**
