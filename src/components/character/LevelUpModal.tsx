@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import { getSystemTemplate, type SystemTemplate } from '../../services/game/attribute-templates';
+import { t } from '../../services/i18n/use-i18n';
 import type { Character } from '../../types/models';
 
 interface LevelUpModalProps {
@@ -85,7 +86,7 @@ export function LevelUpModal({
       }}
     >
       <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title="🎉 LEVEL UP!">
+        <Card title={t('levelUp.title')}>
           {/* Level Up Header */}
           <div
             style={{
@@ -100,7 +101,7 @@ export function LevelUpModal({
                 color: '#9cd84e',
               }}
             >
-              You are now <strong>Level {character.level}</strong>
+              {t('levelUp.youAreNowLevel')} <strong>{character.level}</strong>
             </p>
             <p
               style={{
@@ -108,7 +109,9 @@ export function LevelUpModal({
                 color: '#6a8f3a',
               }}
             >
-              Allocate {attributePoints} attribute point{attributePoints > 1 ? 's' : ''}
+              {attributePoints === 1
+                ? t('levelUp.allocatePoint', { count: attributePoints })
+                : t('levelUp.allocatePoints', { count: attributePoints })}
             </p>
           </div>
 
@@ -285,7 +288,7 @@ export function LevelUpModal({
               color: pointsRemaining > 0 ? '#d84e4e' : '#9cd84e',
             }}
           >
-            Points remaining: {pointsRemaining}
+            {t('levelUp.pointsRemaining')}: {pointsRemaining}
           </div>
 
           {/* Confirm Button */}
@@ -296,7 +299,7 @@ export function LevelUpModal({
             }}
           >
             <Button onClick={handleConfirm} disabled={pointsRemaining > 0}>
-              Confirm Level Up
+              {t('levelUp.confirmLevelUp')}
             </Button>
           </div>
         </Card>

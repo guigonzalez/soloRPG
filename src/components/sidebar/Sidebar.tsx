@@ -2,6 +2,7 @@ import { RecapPanel } from './RecapPanel';
 import { EntitiesPanel } from './EntitiesPanel';
 import { CharacterPanel } from './CharacterPanel';
 import { useUIStore } from '../../store/ui-store';
+import { t } from '../../services/i18n/use-i18n';
 import type { Recap, Entity, Character } from '../../types/models';
 
 interface SidebarProps {
@@ -32,7 +33,7 @@ export function Sidebar({ recap, entities, character, campaignSystem, onEndSessi
             textTransform: 'uppercase',
             letterSpacing: '1px'
           }}>
-            Game Info
+            {t('sidebar.gameInfo')}
           </div>
           <button
             className="retro-button"
@@ -43,7 +44,7 @@ export function Sidebar({ recap, entities, character, campaignSystem, onEndSessi
               minWidth: 'auto'
             }}
           >
-            End Session
+            {t('sidebar.endSession')}
           </button>
         </div>
       </div>
@@ -53,19 +54,19 @@ export function Sidebar({ recap, entities, character, campaignSystem, onEndSessi
           className={`sidebar-tab ${activePanel === 'character' ? 'active' : ''}`}
           onClick={() => setActivePanel('character')}
         >
-          Character
+          {t('sidebar.character')}
         </button>
         <button
           className={`sidebar-tab ${activePanel === 'recap' ? 'active' : ''}`}
           onClick={() => setActivePanel('recap')}
         >
-          Recap
+          {t('sidebar.recap')}
         </button>
         <button
           className={`sidebar-tab ${activePanel === 'entities' ? 'active' : ''}`}
           onClick={() => setActivePanel('entities')}
         >
-          Entities
+          {t('sidebar.entities')}
         </button>
       </div>
 

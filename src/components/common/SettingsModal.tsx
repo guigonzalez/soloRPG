@@ -3,6 +3,7 @@ import { Button } from './Button';
 import { Card } from './Card';
 import { saveApiKey, clearApiKey, getApiKey, getAIProvider, validateApiKeyFormat, type AIProvider } from '../../services/storage/api-key-storage';
 import { getSettings, saveSettings, AVAILABLE_LANGUAGES } from '../../services/storage/settings-storage';
+import { t } from '../../services/i18n/use-i18n';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -73,7 +74,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       padding: '20px',
     }}>
       <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title="Settings">
+        <Card title={t('settings.title')}>
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '16px',
@@ -125,7 +126,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">AI Provider</label>
+              <label className="form-label">{t('settings.aiProvider')}</label>
               <select
                 className="retro-input"
                 value={provider}
@@ -137,7 +138,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">New API Key</label>
+              <label className="form-label">{t('settings.apiKey')}</label>
               <input
                 type="password"
                 className="retro-input"
@@ -205,13 +206,15 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </h3>
 
             <div className="form-group">
-              <label className="form-label">Language / Idioma</label>
+              <label className="form-label">{t('settings.language')}</label>
               <select
                 className="form-select"
                 value={language}
                 onChange={(e) => {
                   setLanguage(e.target.value);
                   saveSettings({ language: e.target.value });
+                  // Reload to apply UI language changes
+                  setTimeout(() => window.location.reload(), 500);
                 }}
               >
                 {AVAILABLE_LANGUAGES.map(lang => (
@@ -225,7 +228,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 color: 'var(--color-text-secondary)',
                 marginTop: '8px',
               }}>
-                AI narration and content will be generated in this language
+                {language === 'pt'
+                  ? 'A narração da IA será gerada neste idioma'
+                  : language === 'es'
+                  ? 'La narración de la IA se generará en este idioma'
+                  : 'AI narration and content will be generated in this language'}
               </div>
             </div>
           </div>
@@ -236,7 +243,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             marginTop: '16px',
           }}>
             <Button onClick={onClose} style={{ width: '100%' }}>
-              Close
+              {t('common.close')}
             </Button>
           </div>
         </Card>

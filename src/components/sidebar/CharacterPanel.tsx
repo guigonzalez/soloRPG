@@ -1,6 +1,7 @@
 import type { Character } from '../../types/models';
 import { getSystemTemplate, getAttributeModifier } from '../../services/game/attribute-templates';
 import { getNextLevelXP } from '../../services/game/experience-calculator';
+import { t } from '../../services/i18n/use-i18n';
 
 interface CharacterPanelProps {
   character: Character;
@@ -36,7 +37,7 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           fontSize: '12px',
           color: '#6a8f3a',
         }}>
-          Level {character.level}
+          {t('characterPanel.level')} {character.level}
         </div>
       </div>
 
@@ -49,10 +50,10 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           marginBottom: '8px',
         }}>
           <span style={{ fontSize: '10px', color: '#9cd84e' }}>
-            Experience
+            {t('characterPanel.experience')}
           </span>
           <span style={{ fontSize: '10px', color: '#6a8f3a' }}>
-            {character.experience} / {nextLevelXP === Infinity ? 'MAX' : nextLevelXP}
+            {character.experience} / {nextLevelXP === Infinity ? t('characterPanel.maxLevel') : nextLevelXP}
           </span>
         </div>
         <div style={{
@@ -81,7 +82,7 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           marginBottom: '12px',
           color: '#9cd84e',
         }}>
-          Attributes
+          {t('characterPanel.attributes')}
         </h4>
         <div style={{
           display: 'grid',
