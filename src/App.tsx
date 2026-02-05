@@ -9,6 +9,7 @@ import { LevelUpModal } from './components/character/LevelUpModal';
 import { useCampaignStore } from './store/campaign-store';
 import { useChatStore } from './store/chat-store';
 import { useCharacterStore } from './store/character-store';
+import { useUIStore } from './store/ui-store';
 import { useMessages } from './hooks/useMessages';
 import { useRolls } from './hooks/useRolls';
 import { useAI } from './hooks/useAI';
@@ -34,6 +35,7 @@ function App() {
 
   // All hooks must be called unconditionally at the top
   const { activeCampaignId, setActiveCampaign, getActiveCampaign } = useCampaignStore();
+  const { sidebarOpen, toggleSidebar } = useUIStore();
   const { isAIResponding, streamedContent, suggestedActions, messagesLoaded, loadedMessageCount, loadGeneration } = useChatStore();
   const { levelUpPending, attributePointsAvailable, confirmLevelUp } = useCharacterStore();
   const activeCampaign = getActiveCampaign();
@@ -355,14 +357,22 @@ function App() {
     <div className="app-container">
       <div className="main-content">
         <div className="app-header">
-          <div>
-            <button className="retro-button" onClick={handleBackToCampaigns}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button className="retro-button header-back-btn" onClick={handleBackToCampaigns}>
               ← {t('common.back')}
+            </button>
+            <button
+              className="retro-button sidebar-toggle"
+              onClick={toggleSidebar}
+              aria-label={t('sidebar.gameInfo')}
+              title={t('sidebar.gameInfo')}
+            >
+              ☰
             </button>
           </div>
           <h1 className="app-title">{activeCampaign.title}</h1>
           <div>
-            <button className="retro-button" onClick={() => setShowSettings(true)}>
+            <button className="retro-button header-settings-btn" onClick={() => setShowSettings(true)}>
               {t('common.settings')}
             </button>
           </div>
@@ -386,6 +396,11 @@ function App() {
         />
       </div>
 
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+        onClick={toggleSidebar}
+        aria-hidden="true"
+      />
       <Sidebar
         recap={recap}
         entities={entities}
@@ -394,6 +409,8 @@ function App() {
         onEndSession={handleEndSession}
         onUpdateRecap={handleUpdateRecap}
         isUpdatingRecap={isUpdatingRecap}
+        isOpen={sidebarOpen}
+        onClose={toggleSidebar}
       />
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}

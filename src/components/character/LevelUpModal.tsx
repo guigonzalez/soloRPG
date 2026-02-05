@@ -69,53 +69,22 @@ export function LevelUpModal({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 56, 15, 0.95)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px',
-        overflowY: 'auto',
-      }}
-    >
-      <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title={t('levelUp.title')}>
-          {/* Level Up Header */}
-          <div
-            style={{
-              marginBottom: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '16px',
-                marginBottom: '8px',
-                color: '#9cd84e',
-              }}
-            >
-              {t('levelUp.youAreNowLevel')} <strong>{character.level}</strong>
-            </p>
-            <p
-              style={{
-                fontSize: '14px',
-                color: '#6a8f3a',
-              }}
-            >
-              {attributePoints === 1
-                ? t('levelUp.allocatePoint', { count: attributePoints })
-                : t('levelUp.allocatePoints', { count: attributePoints })}
-            </p>
-          </div>
+    <div className="page-overlay">
+      <div className="page-modal">
+        <div className="page-hero" style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div className="page-hero-badge">⬆️ {t('levelUp.title')}</div>
+          <h1 className="page-hero-title">
+            {t('levelUp.youAreNowLevel')} {character.level}
+          </h1>
+          <p className="page-hero-tagline">
+            {attributePoints === 1
+              ? t('levelUp.allocatePoint', { count: attributePoints })
+              : t('levelUp.allocatePoints', { count: attributePoints })}
+          </p>
+        </div>
 
-          {/* Attribute Allocation */}
+        <Card title="">
+
           <div style={{ marginBottom: '24px' }}>
             <div
               style={{
@@ -131,14 +100,7 @@ export function LevelUpModal({
                 const modifier = preset.modifierCalculation?.(newValue);
 
                 return (
-                  <div
-                    key={attrDef.name}
-                    style={{
-                      padding: '12px',
-                      backgroundColor: '#0f380f',
-                      border: '2px solid #9cd84e',
-                    }}
-                  >
+                  <div key={attrDef.name} className="char-attr-card">
                     <div
                       style={{
                         display: 'flex',
@@ -148,31 +110,15 @@ export function LevelUpModal({
                       }}
                     >
                       <div>
-                        <div
-                          style={{
-                            fontSize: '12px',
-                            color: '#9cd84e',
-                            marginBottom: '4px',
-                          }}
-                        >
+                        <div className="char-field-label" style={{ marginBottom: '4px', fontSize: '12px' }}>
                           {attrDef.displayName}
                         </div>
-                        <div
-                          style={{
-                            fontSize: '8px',
-                            color: '#6a8f3a',
-                          }}
-                        >
+                        <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>
                           {attrDef.description}
                         </div>
                       </div>
                       {modifier !== undefined && (
-                        <div
-                          style={{
-                            fontSize: '10px',
-                            color: '#6a8f3a',
-                          }}
-                        >
+                        <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>
                           ({modifier >= 0 ? '+' : ''}
                           {modifier})
                         </div>
@@ -188,21 +134,10 @@ export function LevelUpModal({
                         marginBottom: '8px',
                       }}
                     >
-                      <span
-                        style={{
-                          fontSize: '14px',
-                          color: allocated > 0 ? '#9cd84e' : '#6a8f3a',
-                        }}
-                      >
+                      <span className="char-attr-value" style={{ fontSize: '14px' }}>
                         {currentValue}
                         {allocated > 0 && (
-                          <span
-                            style={{
-                              fontSize: '12px',
-                              color: '#9cd84e',
-                              marginLeft: '4px',
-                            }}
-                          >
+                          <span style={{ fontSize: '12px', marginLeft: '4px' }}>
                             → {newValue}
                           </span>
                         )}
@@ -219,19 +154,9 @@ export function LevelUpModal({
                       }}
                     >
                       <button
+                        className="char-btn-sm"
                         onClick={() => handleDecrement(attrDef.name)}
                         disabled={allocated <= 0}
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          fontSize: '14px',
-                          fontFamily: '"Press Start 2P", monospace',
-                          backgroundColor: '#0f380f',
-                          color: '#9cd84e',
-                          border: '2px solid #9cd84e',
-                          cursor: allocated <= 0 ? 'not-allowed' : 'pointer',
-                          opacity: allocated <= 0 ? 0.5 : 1,
-                        }}
                       >
                         -
                       </button>
@@ -241,34 +166,18 @@ export function LevelUpModal({
                           width: '60px',
                           textAlign: 'center',
                           fontSize: '14px',
-                          color: '#9cd84e',
+                          color: 'var(--color-accent)',
                         }}
                       >
                         +{allocated}
                       </div>
 
                       <button
+                        className="char-btn-sm"
                         onClick={() => handleIncrement(attrDef.name)}
                         disabled={
                           pointsRemaining <= 0 || newValue >= attrDef.maxValue
                         }
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          fontSize: '14px',
-                          fontFamily: '"Press Start 2P", monospace',
-                          backgroundColor: '#0f380f',
-                          color: '#9cd84e',
-                          border: '2px solid #9cd84e',
-                          cursor:
-                            pointsRemaining <= 0 || newValue >= attrDef.maxValue
-                              ? 'not-allowed'
-                              : 'pointer',
-                          opacity:
-                            pointsRemaining <= 0 || newValue >= attrDef.maxValue
-                              ? 0.5
-                              : 1,
-                        }}
                       >
                         +
                       </button>
@@ -279,25 +188,18 @@ export function LevelUpModal({
             </div>
           </div>
 
-          {/* Points Remaining */}
           <div
             style={{
               marginBottom: '24px',
               textAlign: 'center',
               fontSize: '14px',
-              color: pointsRemaining > 0 ? '#d84e4e' : '#9cd84e',
+              color: pointsRemaining > 0 ? '#e74c3c' : 'var(--color-accent)',
             }}
           >
             {t('levelUp.pointsRemaining')}: {pointsRemaining}
           </div>
 
-          {/* Confirm Button */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Button onClick={handleConfirm} disabled={pointsRemaining > 0}>
               {t('levelUp.confirmLevelUp')}
             </Button>

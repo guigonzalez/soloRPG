@@ -29,6 +29,17 @@ export interface Translations {
     tone: string;
   };
 
+  // Landing / Hero
+  landing: {
+    badge: string;
+    title: string;
+    tagline: string;
+    description: string;
+    quickStartCta: string;
+    createCustom: string;
+    firstTimeHint: string;
+  };
+
   // Campaign List
   campaignList: {
     title: string;
@@ -341,6 +352,16 @@ export const translations: Record<Language, Translations> = {
       tone: 'Tone',
     },
 
+    landing: {
+      badge: 'AI-Powered Solo RPG',
+      title: 'Solo RPG',
+      tagline: 'Your adventure, your rules.',
+      description: 'Play tabletop RPGs solo with an AI narrator. Choose from 50 ready-to-play campaigns or create your own. Roll dice, make choices, and live the story.',
+      quickStartCta: 'Start Playing Now',
+      createCustom: 'Create Custom Campaign',
+      firstTimeHint: 'New here? Click above to jump into a ready-made adventure in seconds.',
+    },
+
     campaignList: {
       title: 'Solo RPG',
       newCampaign: 'New Campaign',
@@ -635,6 +656,16 @@ export const translations: Record<Language, Translations> = {
       tone: 'Tom',
     },
 
+    landing: {
+      badge: 'RPG Solo com IA',
+      title: 'Solo RPG',
+      tagline: 'Sua aventura, suas regras.',
+      description: 'Jogue RPGs de mesa sozinho com um narrador de IA. Escolha entre 50 campanhas prontas ou crie a sua. Role dados, faça escolhas e viva a história.',
+      quickStartCta: 'Jogar Agora',
+      createCustom: 'Criar Campanha Personalizada',
+      firstTimeHint: 'Novo por aqui? Clique acima para começar uma aventura pronta em segundos.',
+    },
+
     campaignList: {
       title: 'RPG Solo',
       newCampaign: 'Nova Campanha',
@@ -927,6 +958,16 @@ export const translations: Record<Language, Translations> = {
       deleteConfirm: '¿Eliminar campaña "{title}"? Esta acción no se puede deshacer.',
       theme: 'Tema',
       tone: 'Tono',
+    },
+
+    landing: {
+      badge: 'RPG en Solitario con IA',
+      title: 'Solo RPG',
+      tagline: 'Tu aventura, tus reglas.',
+      description: 'Juega RPGs de mesa en solitario con un narrador de IA. Elige entre 50 campañas listas o crea la tuya. Tira dados, toma decisiones y vive la historia.',
+      quickStartCta: 'Jugar Ahora',
+      createCustom: 'Crear Campaña Personalizada',
+      firstTimeHint: '¿Nuevo aquí? Haz clic arriba para empezar una aventura lista en segundos.',
     },
 
     campaignList: {

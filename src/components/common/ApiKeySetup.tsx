@@ -47,30 +47,18 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'var(--color-bg-primary)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px',
-    }}>
-      <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title={t('apiKeySetup.welcome')}>
-          <div style={{ marginBottom: '24px', lineHeight: '1.6' }}>
-            <p style={{ marginBottom: '12px' }}>
-              {t('apiKeySetup.intro')}
-            </p>
-            <p style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-              {t('apiKeySetup.introPrivacy')}
-            </p>
-          </div>
+    <div className="page-overlay">
+      <div className="page-modal">
+        <div className="page-hero">
+          <div className="page-hero-badge">🔑 {t('landing.badge')}</div>
+          <h1 className="page-hero-title">{t('apiKeySetup.welcome')}</h1>
+          <p className="page-hero-tagline">{t('apiKeySetup.intro')}</p>
+          <p className="page-hero-tagline" style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9 }}>
+            {t('apiKeySetup.introPrivacy')}
+          </p>
+        </div>
 
+        <Card title="">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">{t('apiKeySetup.aiProvider')}</label>
@@ -101,38 +89,22 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
             </div>
 
             {error && (
-              <div style={{
-                padding: '12px',
-                marginBottom: '16px',
-                border: '2px solid var(--color-accent)',
-                backgroundColor: 'var(--color-bg-primary)',
-                color: 'var(--color-accent)',
-                fontSize: '14px',
-              }}>
+              <div className="error-container" style={{ marginBottom: '16px' }}>
                 {error}
               </div>
             )}
 
-            <div style={{
-              padding: '12px',
-              marginBottom: '16px',
-              border: '2px solid var(--color-border)',
-              backgroundColor: 'var(--color-bg-primary)',
-              fontSize: '12px',
-              lineHeight: '1.6',
-            }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                {t('apiKeySetup.noKeyTitle')}
-              </div>
+            <div className="page-hint-box">
+              <strong>{t('apiKeySetup.noKeyTitle')}</strong>
 
               {provider === 'claude' ? (
                 <>
                   <ol style={{ marginLeft: '20px', marginBottom: '8px' }}>
                     <li>{t('apiKeySetup.claudeStep1')} <a
+                      className="page-link"
                       href="https://console.anthropic.com/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}
                     >
                       console.anthropic.com
                     </a></li>
@@ -148,10 +120,10 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
                 <>
                   <ol style={{ marginLeft: '20px', marginBottom: '8px' }}>
                     <li>{t('apiKeySetup.geminiStep1')} <a
+                      className="page-link"
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}
                     >
                       aistudio.google.com
                     </a></li>
@@ -169,17 +141,13 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
             <Button
               type="submit"
               disabled={isValidating || !apiKey.trim()}
-              style={{ width: '100%' }}
+              className="landing-cta-primary"
+              style={{ width: '100%', marginTop: '8px' }}
             >
               {isValidating ? t('apiKeySetup.saving') : t('apiKeySetup.saveAndStart')}
             </Button>
 
-            <div style={{
-              marginTop: '12px',
-              fontSize: '11px',
-              textAlign: 'center',
-              color: 'var(--color-text-secondary)',
-            }}>
+            <div className="page-hero-tagline" style={{ marginTop: '12px', fontSize: '11px', textAlign: 'center' }}>
               {t('apiKeySetup.changeLater')}
             </div>
           </form>

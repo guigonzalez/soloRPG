@@ -32,41 +32,24 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
 
   return (
     <Card className="campaign-card" onClick={() => onSelect(campaign)}>
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{
-          fontSize: '16px',
-          fontWeight: 'bold',
-          marginBottom: '4px',
-          color: 'var(--color-accent)'
-        }}>
-          {campaign.title}
-        </div>
-        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-          {formatDate(campaign.updatedAt)}
-        </div>
+      <div className="campaign-card-header">
+        <div className="campaign-card-title">{campaign.title}</div>
+        <div className="campaign-card-date">{formatDate(campaign.updatedAt)}</div>
       </div>
 
-      <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-        <strong>{t('campaignCard.theme')}:</strong> {campaign.theme}
+      <div className="campaign-card-meta">
+        <span className="campaign-card-label">{t('campaignCard.theme')}:</span> {campaign.theme}
       </div>
 
-      <div style={{ fontSize: '14px', marginBottom: '12px' }}>
-        <strong>{t('campaignCard.tone')}:</strong> {campaign.tone}
+      <div className="campaign-card-meta campaign-card-tone">
+        <span className="campaign-card-label">{t('campaignCard.tone')}:</span> {campaign.tone}
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          className="retro-button"
-          onClick={handleExport}
-          style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
-        >
-          {t('settings.exportCampaign')}
+      <div className="campaign-card-actions">
+        <button className="retro-button campaign-card-btn" onClick={handleExport}>
+          📤 {t('settings.exportCampaign')}
         </button>
-        <button
-          className="retro-button"
-          onClick={handleDelete}
-          style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
-        >
+        <button className="retro-button campaign-card-btn campaign-card-btn-danger" onClick={handleDelete}>
           {t('common.delete')}
         </button>
       </div>

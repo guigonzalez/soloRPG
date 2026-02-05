@@ -227,111 +227,43 @@ export function CharacterCreation({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(15, 56, 15, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px',
-    }}>
-      <div style={{
-        maxWidth: '700px',
-        width: '100%',
-        maxHeight: '90vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        <Card title={`${t('characterCreation.title')} - ${campaignSystem}`}>
-          {/* Tabs */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            marginBottom: '24px',
-            borderBottom: '2px solid #9cd84e',
-          }}>
+    <div className="page-overlay">
+      <div className="page-modal-wide">
+        <div className="page-hero">
+          <div className="page-hero-badge">🧙 {t('characterCreation.title')}</div>
+          <h1 className="page-hero-title">{campaignSystem}</h1>
+          <p className="page-hero-tagline">{t('landing.tagline')}</p>
+        </div>
+
+        <Card title="">
+          <div className="char-tab-bar">
             <button
+              className={`char-tab ${activeTab === 'basic' ? 'active' : ''}`}
               onClick={() => setActiveTab('basic')}
-              style={{
-                flex: 1,
-                padding: '12px',
-                fontSize: '10px',
-                fontFamily: '"Press Start 2P", monospace',
-                backgroundColor: activeTab === 'basic' ? '#9cd84e' : '#0f380f',
-                color: activeTab === 'basic' ? '#0f380f' : '#9cd84e',
-                border: 'none',
-                borderBottom: activeTab === 'basic' ? 'none' : '2px solid #9cd84e',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
             >
               {t('characterCreation.basicTab')}
             </button>
             <button
+              className={`char-tab ${activeTab === 'attributes' ? 'active' : ''}`}
               onClick={() => setActiveTab('attributes')}
-              style={{
-                flex: 1,
-                padding: '12px',
-                fontSize: '10px',
-                fontFamily: '"Press Start 2P", monospace',
-                backgroundColor: activeTab === 'attributes' ? '#9cd84e' : '#0f380f',
-                color: activeTab === 'attributes' ? '#0f380f' : '#9cd84e',
-                border: 'none',
-                borderBottom: activeTab === 'attributes' ? 'none' : '2px solid #9cd84e',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
             >
               {t('characterCreation.attributesTab')}
             </button>
             <button
+              className={`char-tab ${activeTab === 'inventory' ? 'active' : ''}`}
               onClick={() => setActiveTab('inventory')}
-              style={{
-                flex: 1,
-                padding: '12px',
-                fontSize: '10px',
-                fontFamily: '"Press Start 2P", monospace',
-                backgroundColor: activeTab === 'inventory' ? '#9cd84e' : '#0f380f',
-                color: activeTab === 'inventory' ? '#0f380f' : '#9cd84e',
-                border: 'none',
-                borderBottom: activeTab === 'inventory' ? 'none' : '2px solid #9cd84e',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
             >
               {t('characterCreation.inventoryTab')}
             </button>
             <button
+              className={`char-tab ${activeTab === 'background' ? 'active' : ''}`}
               onClick={() => setActiveTab('background')}
-              style={{
-                flex: 1,
-                padding: '12px',
-                fontSize: '10px',
-                fontFamily: '"Press Start 2P", monospace',
-                backgroundColor: activeTab === 'background' ? '#9cd84e' : '#0f380f',
-                color: activeTab === 'background' ? '#0f380f' : '#9cd84e',
-                border: 'none',
-                borderBottom: activeTab === 'background' ? 'none' : '2px solid #9cd84e',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-              }}
             >
               {t('characterCreation.backgroundTab')}
             </button>
           </div>
 
-          {/* Scrollable content area */}
-          <div style={{
-            maxHeight: 'calc(90vh - 250px)',
-            overflowY: 'auto',
-            paddingRight: '8px',
-            marginBottom: '24px',
-          }}>
+          <div className="char-tab-content">
             {/* Basic Info Tab */}
             {activeTab === 'basic' && (
               <div>

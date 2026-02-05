@@ -13,13 +13,15 @@ interface SidebarProps {
   onEndSession: () => void;
   onUpdateRecap: () => void;
   isUpdatingRecap: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ recap, entities, character, campaignSystem, onEndSession, onUpdateRecap, isUpdatingRecap }: SidebarProps) {
+export function Sidebar({ recap, entities, character, campaignSystem, onEndSession, onUpdateRecap, isUpdatingRecap, isOpen = false, onClose }: SidebarProps) {
   const { activePanel, setActivePanel } = useUIStore();
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
       <div className="sidebar-header">
         <div style={{
           display: 'flex',
@@ -35,7 +37,18 @@ export function Sidebar({ recap, entities, character, campaignSystem, onEndSessi
           }}>
             {t('sidebar.gameInfo')}
           </div>
-          <button
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {onClose && (
+              <button
+                className="retro-button sidebar-close"
+                onClick={onClose}
+                aria-label={t('common.close')}
+                style={{ fontSize: '18px', padding: '4px 8px', minWidth: 'auto' }}
+              >
+                ✕
+              </button>
+            )}
+            <button
             className="retro-button"
             onClick={onEndSession}
             style={{
@@ -46,6 +59,7 @@ export function Sidebar({ recap, entities, character, campaignSystem, onEndSessi
           >
             {t('sidebar.endSession')}
           </button>
+          </div>
         </div>
       </div>
 

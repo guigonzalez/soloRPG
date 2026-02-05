@@ -63,36 +63,25 @@ export function PresetCampaigns({ onSelectCampaign, onBack }: PresetCampaignsPro
 
   return (
     <div className="campaign-list-page">
-      <div className="retro-container" style={{ flexShrink: 0 }}>
-        <div className="app-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button className="retro-button" onClick={onBack}>
-              ← {t('common.back')}
-            </button>
-            <h1 className="app-title">{t('presetCampaigns.title')}</h1>
-          </div>
+      <div className="retro-container preset-campaigns-header" style={{ flexShrink: 0 }}>
+        <div className="preset-campaigns-nav">
+          <button className="retro-button" onClick={onBack}>
+            ← {t('common.back')}
+          </button>
+        </div>
+        <div className="preset-campaigns-intro">
+          <h1 className="preset-campaigns-title">{t('presetCampaigns.title')}</h1>
+          <p className="preset-campaigns-subtitle">{t('presetCampaigns.subtitle')}</p>
         </div>
 
-        <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '16px', maxWidth: '600px' }}>
-          {t('presetCampaigns.subtitle')}
-        </p>
-
         {/* Search & Filters */}
-        <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+        <div className="preset-campaigns-filters">
         <input
           type="text"
+          className="preset-search-input"
           placeholder={t('presetCampaigns.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: '8px 12px',
-            fontSize: '14px',
-            fontFamily: 'var(--font-family)',
-            backgroundColor: 'var(--color-bg-tertiary)',
-            border: '2px solid var(--color-border)',
-            color: 'var(--color-text-primary)',
-            minWidth: '200px',
-          }}
         />
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
@@ -131,17 +120,7 @@ export function PresetCampaigns({ onSelectCampaign, onBack }: PresetCampaignsPro
           const c = campaigns[preset.id];
           if (!c) return null;
           return (
-          <div
-            key={preset.id}
-            style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-bg-secondary)',
-              border: '2px solid var(--color-border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
+          <div key={preset.id} className="preset-campaign-card">
             {preset.tag && (
               <span
                 style={{
@@ -172,17 +151,11 @@ export function PresetCampaigns({ onSelectCampaign, onBack }: PresetCampaignsPro
               {c.tone}
             </div>
             <button
-              className="retro-button"
+              className="retro-button preset-play-btn"
               onClick={() => handlePlay(preset)}
               disabled={creatingId !== null}
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '12px',
-                marginTop: '4px',
-              }}
             >
-              {creatingId === preset.id ? '...' : t('presetCampaigns.play')}
+              {creatingId === preset.id ? '...' : `▶ ${t('presetCampaigns.play')}`}
             </button>
           </div>
           );

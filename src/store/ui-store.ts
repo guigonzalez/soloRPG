@@ -15,7 +15,7 @@ interface UIStore {
 }
 
 export const useUIStore = create<UIStore>((set) => ({
-  sidebarOpen: true,
+  sidebarOpen: false, /* false = sidebar drawer closed on mobile; desktop always shows sidebar in flow */
   activePanel: 'character',
   theme: '8bit-green',
 

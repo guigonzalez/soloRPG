@@ -72,8 +72,19 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
   };
 
   return (
-    <div className="retro-container">
-      <Card title={t('campaignCreation.title')}>
+    <div className="campaign-list-page campaign-create-page">
+      <div className="campaign-list-scroll">
+      <div className="retro-container">
+        <div className="campaign-create-header">
+          <button className="retro-button" onClick={onCancel}>
+            ← {t('common.back')}
+          </button>
+          <h1 className="campaign-create-title">{t('campaignCreation.title')}</h1>
+          <p className="campaign-create-subtitle">
+            {t('campaignCreation.theme')} • {t('campaignCreation.tone')} • {t('campaignCreation.narrativeTheme')}
+          </p>
+        </div>
+      <Card title="">
         <form onSubmit={handleSubmit}>
           <Input
             label={t('campaignCreation.campaignTitle')}
@@ -187,6 +198,8 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
           </div>
         </form>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }

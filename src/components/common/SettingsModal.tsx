@@ -60,38 +60,20 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(15, 56, 15, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px',
-    }}>
-      <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title={t('settings.title')}>
+    <div className="page-overlay">
+      <div className="page-modal">
+        <div className="page-hero">
+          <div className="page-hero-badge">⚙️ {t('common.settings')}</div>
+          <h1 className="page-hero-title">{t('settings.title')}</h1>
+        </div>
+
+        <Card title="">
           <div style={{ marginBottom: '24px' }}>
-            <h3 style={{
-              fontSize: '16px',
-              marginBottom: '12px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-            }}>
+            <h3 className="page-section-title">
               {t('settings.apiKeyConfigTitle')}
             </h3>
 
-            <div style={{
-              padding: '12px',
-              marginBottom: '16px',
-              border: '2px solid var(--color-border)',
-              backgroundColor: 'var(--color-bg-primary)',
-              fontSize: '14px',
-            }}>
+            <div className="page-hint-box">
               <strong>{t('settings.providerLabel')}:</strong> {currentProvider === 'claude' ? 'Claude (Anthropic)' : 'Gemini (Google)'}
               <br />
               <strong>{t('settings.status')}:</strong> {currentKey ? t('settings.configured') : t('settings.notConfigured')}
@@ -191,17 +173,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </div>
 
-          <div style={{
-            borderTop: '2px solid var(--color-border)',
-            paddingTop: '24px',
-            marginTop: '24px',
-          }}>
-            <h3 style={{
-              fontSize: '16px',
-              marginBottom: '12px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-            }}>
+          <div className="page-section">
+            <h3 className="page-section-title">
               {t('settings.generalSettings')}
             </h3>
 
@@ -233,11 +206,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </div>
 
-          <div style={{
-            borderTop: '2px solid var(--color-border)',
-            paddingTop: '16px',
-            marginTop: '16px',
-          }}>
+          <div className="page-section">
             <Button onClick={onClose} style={{ width: '100%' }}>
               {t('common.close')}
             </Button>
