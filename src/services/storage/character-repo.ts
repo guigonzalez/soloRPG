@@ -152,23 +152,30 @@ export async function updateCharacterHP(id: string, hitPoints: number): Promise<
 }
 
 /**
- * Update a specific resource value
+ * Remove legacy resources from a character (migration for old data)
  */
-export async function updateCharacterResource(
-  id: string,
-  resourceName: string,
-  value: number
-): Promise<Character> {
+export async function removeLegacyResources(id: string): Promise<Character> {
   const character = await getCharacterById(id);
-
   if (!character) {
     throw new Error(`Character ${id} not found`);
   }
-
-  const updatedResources = {
-    ...(character.resources || {}),
-    [resourceName]: value,
+  const { resources: _r, maxResources: _m, ...clean } = character as Character & {
+    resources?: Record<string, number>;
+    maxResources?: Record<string, number>;
   };
-
-  return await updateCharacter(id, { resources: updatedResources });
+  const updated = { ...clean, updatedAt: Date.now() };
+  const db = await getDB();
+  await db.put('characters', updated);
+  return updated as Character;
 }
+
+/**
+ * Update character misfortune (amarra / bad luck stacks)
+ */
+export async function updateCharacterMisfortune(
+  id: string,
+  misfortune: number
+): Promise<Character> {
+  return await updateCharacter(id, { misfortune: Math.max(0, misfortune) });
+}
+

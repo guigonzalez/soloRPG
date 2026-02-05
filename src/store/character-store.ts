@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { Character, NewCharacter } from '../types/models';
 import * as characterRepo from '../services/storage/character-repo';
-import { calculateLevelUp } from '../services/game/experience-calculator';
-import { getSystemTemplate } from '../services/game/attribute-templates';
+import { calculateLevelUp, getLevelFromXP, getMinXPForLevel } from '../services/game/experience-calculator';
+import { migrateLegacyAttributes, needsAttributeMigration } from '../services/game/universal-attributes';
 
 interface CharacterStore {
   character: Character | null;
@@ -15,17 +15,23 @@ interface CharacterStore {
   loadCharacter: (campaignId: string) => Promise<void>;
   createCharacter: (data: NewCharacter) => Promise<Character>;
   setCharacter: (character: Character | null) => void;
-  updateExperience: (xpGain: number, campaignSystem: string) => Promise<{ leveledUp: boolean; newLevel: number; attributePoints: number }>;
+  updateExperience: (xpGain: number, campaignSystem: string) => Promise<{ leveledUp: boolean; leveledDown: boolean; newLevel: number; attributePoints: number }>;
   incrementAttribute: (attributeName: string, incrementBy?: number) => Promise<void>;
   confirmLevelUp: () => void;
   clearCharacter: () => void;
 
-  // HP and Resource management
+  // HP management
   takeDamage: (damage: number) => Promise<void>;
   heal: (amount: number) => Promise<void>;
-  updateResource: (resourceName: string, amount: number) => Promise<void>;
-  restoreResource: (resourceName: string, amount: number) => Promise<void>;
-  fullRest: () => Promise<void>; // Restore all HP and resources
+  fullRest: () => Promise<void>;
+
+  // Inventory
+  updateInventory: (inventory: import('../types/models').InventoryItem[]) => Promise<void>;
+  useItem: (itemId: string) => Promise<boolean>; // Returns true if item was used
+
+  // Equipment (weapon, armor)
+  equipItem: (itemId: string, slot: 'weapon' | 'armor') => Promise<void>;
+  unequipItem: (slot: 'weapon' | 'armor') => Promise<void>;
 }
 
 export const useCharacterStore = create<CharacterStore>((set, get) => ({
@@ -37,11 +43,39 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
 
   /**
    * Load character for a campaign
+   * Migrates legacy attributes to universal set if needed
    */
   loadCharacter: async (campaignId: string) => {
     set({ loading: true, error: null });
     try {
-      const character = await characterRepo.getCharacterByCampaign(campaignId);
+      let character = await characterRepo.getCharacterByCampaign(campaignId);
+
+      if (character && needsAttributeMigration(character.attributes)) {
+        const migratedAttributes = migrateLegacyAttributes(character.attributes);
+        character = await characterRepo.updateCharacter(character.id, {
+          attributes: migratedAttributes,
+        });
+      }
+
+      // Migrate legacy characters: ensure inventory exists
+      if (character && character.inventory === undefined) {
+        character = await characterRepo.updateCharacter(character.id, { inventory: [] });
+      }
+
+      // Migrate legacy characters: remove old resources (sanity, blood points, magic points)
+      const raw = character as unknown as Record<string, unknown>;
+      if (character && (raw.resources || raw.maxResources)) {
+        character = await characterRepo.removeLegacyResources(character.id);
+      }
+
+      // Migrate: fix experience for high-level characters created with 0 XP
+      if (character && getLevelFromXP(character.experience) < character.level) {
+        const correctXP = getMinXPForLevel(character.level);
+        character = await characterRepo.updateCharacter(character.id, {
+          experience: correctXP,
+        });
+      }
+
       set({ character, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -74,19 +108,20 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
   /**
    * Update character experience and check for level-up
    * Returns level-up information
+   *
+   * NOTE: campaignSystem parameter kept for backward compatibility but not used.
+   * XP progression now uses universal APP_XP_TABLE from sheet-presets.
    */
-  updateExperience: async (xpGain: number, campaignSystem: string) => {
+  updateExperience: async (xpGain: number, _campaignSystem: string) => {
     const { character } = get();
     if (!character) {
       throw new Error('No character loaded');
     }
 
-    const template = getSystemTemplate(campaignSystem);
     const levelUpResult = calculateLevelUp(
       character.level,
       character.experience,
-      xpGain,
-      template.experienceTable
+      xpGain
     );
 
     const newExperience = character.experience + xpGain;
@@ -190,75 +225,89 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
   },
 
   /**
-   * Spend/use a resource
+   * Update character inventory
    */
-  updateResource: async (resourceName: string, amount: number) => {
+  updateInventory: async (inventory: import('../types/models').InventoryItem[]) => {
     const { character } = get();
-    if (!character || !character.resources || !character.maxResources) {
-      throw new Error('No character or resources available');
+    if (!character) {
+      throw new Error('No character loaded');
     }
-
-    const currentValue = character.resources[resourceName] || 0;
-    const maxValue = character.maxResources[resourceName] || 0;
-    const newValue = Math.max(0, Math.min(maxValue, currentValue + amount));
-
-    const updatedCharacter = await characterRepo.updateCharacterResource(
-      character.id,
-      resourceName,
-      newValue
-    );
-
+    const updatedCharacter = await characterRepo.updateCharacter(character.id, { inventory });
     set({ character: updatedCharacter });
   },
 
   /**
-   * Restore a resource (positive amount only)
+   * Use a consumable item (e.g. healing potion)
+   * Returns true if item was used successfully
    */
-  restoreResource: async (resourceName: string, amount: number) => {
+  useItem: async (itemId: string) => {
     const { character } = get();
-    if (!character || !character.resources || !character.maxResources) {
-      throw new Error('No character or resources available');
+    if (!character || !character.inventory) {
+      return false;
     }
-
-    const currentValue = character.resources[resourceName] || 0;
-    const maxValue = character.maxResources[resourceName] || 0;
-    const newValue = Math.min(maxValue, currentValue + Math.abs(amount));
-
-    const updatedCharacter = await characterRepo.updateCharacterResource(
-      character.id,
-      resourceName,
-      newValue
-    );
-
+    const item = character.inventory.find((i) => i.id === itemId);
+    if (!item || item.type !== 'consumable' || item.quantity < 1) {
+      return false;
+    }
+    const { parseItemEffect } = await import('../services/game/inventory');
+    const effect = parseItemEffect(item.effect || '');
+    if (effect?.type === 'heal' && effect.value) {
+      await get().heal(effect.value);
+    }
+    const newQuantity = item.quantity - 1;
+    const newInventory = character.inventory
+      .map((i) => (i.id === itemId ? { ...i, quantity: newQuantity } : i))
+      .filter((i) => i.quantity > 0);
+    const updatedCharacter = await characterRepo.updateCharacter(character.id, { inventory: newInventory });
     set({ character: updatedCharacter });
+    return true;
   },
 
   /**
-   * Full rest - restore all HP and resources
+   * Equip weapon or armor (itemId from definition)
+   */
+  equipItem: async (itemId: string, slot: 'weapon' | 'armor') => {
+    const { character } = get();
+    if (!character || !character.inventory) return;
+
+    const hasItem = character.inventory.some((i) => i.itemId === itemId);
+    if (!hasItem) return;
+
+    const { getItemDefinition } = await import('../services/game/inventory');
+    const def = getItemDefinition(itemId);
+    if (!def?.equipmentSlot || def.equipmentSlot !== slot) return;
+
+    const updates: Partial<Character> =
+      slot === 'weapon' ? { equippedWeapon: itemId } : { equippedArmor: itemId };
+    const updated = await characterRepo.updateCharacter(character.id, updates);
+    set({ character: updated });
+  },
+
+  /**
+   * Unequip weapon or armor
+   */
+  unequipItem: async (slot: 'weapon' | 'armor') => {
+    const { character } = get();
+    if (!character) return;
+
+    const updates: Partial<Character> =
+      slot === 'weapon' ? { equippedWeapon: undefined } : { equippedArmor: undefined };
+    const updated = await characterRepo.updateCharacter(character.id, updates);
+    set({ character: updated });
+  },
+
+  /**
+   * Full rest - restore HP to max
    */
   fullRest: async () => {
     const { character } = get();
     if (!character) {
       throw new Error('No character loaded');
     }
-
-    // Restore HP to max
-    let updatedCharacter = await characterRepo.updateCharacterHP(
+    const updatedCharacter = await characterRepo.updateCharacterHP(
       character.id,
       character.maxHitPoints
     );
-
-    // Restore all resources to max
-    if (character.maxResources) {
-      for (const [resourceName, maxValue] of Object.entries(character.maxResources)) {
-        updatedCharacter = await characterRepo.updateCharacterResource(
-          character.id,
-          resourceName,
-          maxValue
-        );
-      }
-    }
-
     set({ character: updatedCharacter });
   },
 }));

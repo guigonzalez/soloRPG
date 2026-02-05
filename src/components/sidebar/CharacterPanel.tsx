@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import type { Character } from '../../types/models';
-import { getSystemTemplate, getAttributeModifier } from '../../services/game/attribute-templates';
+import type { Character, InventoryItem } from '../../types/models';
+import { getSheetPreset } from '../../services/game/sheet-presets';
 import { getNextLevelXP } from '../../services/game/experience-calculator';
+import { useCharacterStore } from '../../store/character-store';
+import { useChatStore } from '../../store/chat-store';
+import { useCampaignStore } from '../../store/campaign-store';
+import * as messageRepo from '../../services/storage/message-repo';
+import { parseItemEffect, getItemDefinition, formatEquipmentEffects } from '../../services/game/inventory';
 import { t } from '../../services/i18n/use-i18n';
 
 interface CharacterPanelProps {
@@ -13,13 +18,14 @@ interface CharacterPanelProps {
  * Character Panel - Displays character stats in sidebar
  */
 export function CharacterPanel({ character, campaignSystem }: CharacterPanelProps) {
-  const template = getSystemTemplate(campaignSystem);
-  const nextLevelXP = getNextLevelXP(character.level, template.experienceTable);
+  const preset = getSheetPreset(campaignSystem);
+  const nextLevelXP = getNextLevelXP(character.level);
   const xpProgress = nextLevelXP !== Infinity
     ? ((character.experience / nextLevelXP) * 100).toFixed(0)
     : 100;
 
   const [showBackstory, setShowBackstory] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
 
   // Check if character has any backstory information
   const hasBackstory = character.backstory || character.personality || character.goals || character.fears;
@@ -119,50 +125,23 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
         </div>
       </div>
 
-      {/* System-specific Resources (Sanity, Magic Points, Blood Points, etc.) */}
-      {template.resources && character.resources && character.maxResources && (
-        <div style={{ marginBottom: '16px' }}>
-          {template.resources.map((resourceDef) => {
-            const currentValue = character.resources![resourceDef.name] || 0;
-            const maxValue = character.maxResources![resourceDef.name] || 0;
-            const percentage = maxValue > 0 ? ((currentValue / maxValue) * 100).toFixed(0) : '0';
-            const barColor = resourceDef.color || '#9370db';
-
-            return (
-              <div key={resourceDef.name} style={{ marginBottom: '12px' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '10px', color: barColor }}>
-                    {resourceDef.displayName}
-                  </span>
-                  <span style={{ fontSize: '10px', opacity: 0.7 }}>
-                    {currentValue} / {maxValue}
-                  </span>
-                </div>
-                <div style={{
-                  height: '10px',
-                  backgroundColor: '#0f380f',
-                  border: `2px solid ${barColor}`,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: `${percentage}%`,
-                    backgroundColor: barColor,
-                    transition: 'width 0.3s ease',
-                  }} />
-                </div>
-              </div>
-            );
-          })}
+      {/* Misfortune (Amarra) - shown when > 0 */}
+      {(character.misfortune ?? 0) > 0 && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '8px',
+          backgroundColor: '#2d1f0f',
+          border: '2px solid #b8860b',
+        }} title={t('misfortune.tooltip')}>
+          <div style={{ fontSize: '10px', color: '#b8860b', marginBottom: '4px' }}>
+            {t('misfortune.label')}
+          </div>
+          <div style={{ fontSize: '14px', color: '#daa520', fontWeight: 'bold' }}>
+            {(character.misfortune ?? 0)} / 5
+          </div>
+          <div style={{ fontSize: '9px', color: '#6a8f3a', marginTop: '4px' }}>
+            -{(character.misfortune ?? 0)} to rolls
+          </div>
         </div>
       )}
 
@@ -180,9 +159,9 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '8px',
         }}>
-          {template.attributes.map((attrDef) => {
+          {preset.attributes.map((attrDef) => {
             const value = character.attributes[attrDef.name] || 0;
-            const modifier = getAttributeModifier(value, template);
+            const modifier = preset.modifierCalculation?.(value);
 
             return (
               <div
@@ -227,6 +206,221 @@ export function CharacterPanel({ character, campaignSystem }: CharacterPanelProp
           })}
         </div>
       </div>
+
+      {/* Equipment Section (Weapon, Armor) */}
+      {(character.equippedWeapon || character.equippedArmor) && (
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{
+            fontSize: '12px',
+            color: '#9cd84e',
+            marginBottom: '8px',
+            fontWeight: 'bold',
+          }}>
+            {t('inventory.equipped')}
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}>
+            {character.equippedWeapon && (() => {
+              const def = getItemDefinition(character.equippedWeapon!);
+              const effects = def ? formatEquipmentEffects(def.effect) : [];
+              return def ? (
+                <div key="weapon" style={{
+                  padding: '8px',
+                  backgroundColor: '#0f380f',
+                  border: '2px solid #9cd84e',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '9px', color: '#6a8f3a' }}>{t('inventory.weapon')}</div>
+                      <div style={{ fontSize: '11px', color: '#9cd84e' }}>{def.name}</div>
+                    </div>
+                    <button
+                      onClick={() => useCharacterStore.getState().unequipItem('weapon')}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '8px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('inventory.unequip')}
+                    </button>
+                  </div>
+                  {effects.length > 0 && (
+                    <div style={{ fontSize: '9px', color: '#6a8f3a' }}>
+                      {effects.join(' · ')}
+                    </div>
+                  )}
+                </div>
+              ) : null;
+            })()}
+            {character.equippedArmor && (() => {
+              const def = getItemDefinition(character.equippedArmor!);
+              const effects = def ? formatEquipmentEffects(def.effect) : [];
+              return def ? (
+                <div key="armor" style={{
+                  padding: '8px',
+                  backgroundColor: '#0f380f',
+                  border: '2px solid #9cd84e',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '9px', color: '#6a8f3a' }}>{t('inventory.armor')}</div>
+                      <div style={{ fontSize: '11px', color: '#9cd84e' }}>{def.name}</div>
+                    </div>
+                    <button
+                      onClick={() => useCharacterStore.getState().unequipItem('armor')}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '8px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('inventory.unequip')}
+                    </button>
+                  </div>
+                  {effects.length > 0 && (
+                    <div style={{ fontSize: '9px', color: '#6a8f3a' }}>
+                      {effects.join(' · ')}
+                    </div>
+                  )}
+                </div>
+              ) : null;
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Section */}
+      {(character.inventory?.length ?? 0) > 0 && (
+        <div style={{ marginBottom: hasBackstory ? '16px' : '0' }}>
+          <button
+            onClick={() => setShowInventory(!showInventory)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              fontSize: '12px',
+              fontFamily: '"Press Start 2P", monospace',
+              backgroundColor: '#0f380f',
+              color: '#9cd84e',
+              border: '2px solid #9cd84e',
+              cursor: 'pointer',
+              marginBottom: showInventory ? '12px' : '0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>{t('inventory.title')}</span>
+            <span>{showInventory ? '▼' : '▶'}</span>
+          </button>
+
+          {showInventory && (
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#0f380f',
+              border: '1px solid #9cd84e',
+              fontSize: '10px',
+            }}>
+              {character.inventory!.map((item: InventoryItem) => {
+                const def = getItemDefinition(item.itemId);
+                const isWeapon = def?.equipmentSlot === 'weapon';
+                const isArmor = def?.equipmentSlot === 'armor';
+                const canEquip = isWeapon || isArmor;
+                const isEquipped = (isWeapon && character.equippedWeapon === item.itemId) ||
+                  (isArmor && character.equippedArmor === item.itemId);
+
+                return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                    padding: '6px',
+                    border: '1px solid #6a8f3a',
+                  }}
+                  title={item.description}
+                >
+                  <div>
+                    <span style={{ color: '#9cd84e' }}>{item.name}</span>
+                    {item.quantity > 1 && (
+                      <span style={{ color: '#6a8f3a', marginLeft: '6px' }}>x{item.quantity}</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {canEquip && !isEquipped && (
+                    <button
+                      onClick={() => useCharacterStore.getState().equipItem(item.itemId, isWeapon ? 'weapon' : 'armor')}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '8px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('inventory.equip')}
+                    </button>
+                  )}
+                  {item.type === 'consumable' && item.effect && (
+                    <button
+                      onClick={async () => {
+                        const ok = await useCharacterStore.getState().useItem(item.id);
+                        if (ok) {
+                          const campaignId = useCampaignStore.getState().activeCampaignId;
+                          if (campaignId) {
+                            const effect = parseItemEffect(item.effect || '');
+                            const amount = effect?.type === 'heal' ? effect.value : 0;
+                            const msg = await messageRepo.createMessage({
+                              campaignId,
+                              role: 'system',
+                              content: `💚 ${t('combat.recover', { amount: String(amount) })} (${item.name})`,
+                            });
+                            useChatStore.getState().addMessage(msg);
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '8px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('inventory.useItem')}
+                    </button>
+                  )}
+                  </div>
+                </div>
+              );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Backstory Section */}
       {hasBackstory && (

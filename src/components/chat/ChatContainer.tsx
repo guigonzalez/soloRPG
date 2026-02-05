@@ -19,6 +19,8 @@ interface ChatContainerProps {
   character?: Character | null;
   campaignSystem?: string;
   onAttributeRoll?: (rollNotation: string, dc?: number) => void;
+  isGameOver?: boolean;
+  onBackToCampaigns?: () => void;
 }
 
 /**
@@ -46,6 +48,8 @@ export function ChatContainer({
   character,
   campaignSystem,
   onAttributeRoll,
+  isGameOver = false,
+  onBackToCampaigns,
 }: ChatContainerProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const merged = mergeMessagesAndRolls(messages, rolls);
@@ -92,7 +96,7 @@ export function ChatContainer({
           const messageIndex = messages.findIndex(m => m.id === message.id);
           const isLastAIMessage = messageIndex === lastAIMessageIndex;
           const isLastUserMessage = messageIndex === lastUserMessageIndex;
-          const showActions = isLastAIMessage && suggestedActions.length > 0 && !isAIResponding;
+          const showActions = isLastAIMessage && suggestedActions.length > 0 && !isAIResponding && !isGameOver;
 
           return (
             <ChatMessage
@@ -100,7 +104,7 @@ export function ChatContainer({
               message={message}
               suggestedActions={showActions ? suggestedActions : undefined}
               onSelectAction={onSelectAction}
-              actionsDisabled={isAIResponding}
+              actionsDisabled={isAIResponding || isGameOver}
               character={character}
               campaignSystem={campaignSystem}
               onAttributeRoll={onAttributeRoll}
@@ -135,10 +139,40 @@ export function ChatContainer({
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatInput
-        onSendMessage={onSendMessage}
-        disabled={isAIResponding}
-      />
+      {isGameOver ? (
+        <div
+          style={{
+            padding: '20px',
+            backgroundColor: 'rgba(15, 56, 15, 0.98)',
+            border: '3px solid #c92a2a',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+          }}
+        >
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ff6b6b' }}>
+            💀 {t('gameOver.title')}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+            {t('gameOver.message')}
+          </div>
+          {onBackToCampaigns && (
+            <button
+              className="retro-button"
+              onClick={onBackToCampaigns}
+              style={{ marginTop: '8px' }}
+            >
+              {t('gameOver.returnToCampaigns')}
+            </button>
+          )}
+        </div>
+      ) : (
+        <ChatInput
+          onSendMessage={onSendMessage}
+          disabled={isAIResponding}
+        />
+      )}
     </div>
   );
 }

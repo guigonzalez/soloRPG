@@ -40,58 +40,33 @@ export function useCharacter(campaignId: string | null, _campaignSystem: string)
   async function handleCreateCharacter(
     name: string,
     attributes: Record<string, number>,
+    hitPoints: number,
+    level: number,
     backstory?: string,
     personality?: string,
     goals?: string,
-    fears?: string
+    fears?: string,
+    inventory?: import('../types/models').InventoryItem[]
   ) {
     if (!campaignId) {
       throw new Error('No active campaign');
     }
 
     try {
-      // Import getSystemTemplate to calculate HP
-      const { getSystemTemplate } = await import('../services/game/attribute-templates');
-      const template = getSystemTemplate(_campaignSystem);
-
-      // Create temp character object to calculate HP
-      const tempChar = {
-        id: '',
-        campaignId,
-        name,
-        level: 1,
-        experience: 0,
-        attributes,
-        hitPoints: 0,
-        maxHitPoints: 0,
-        createdAt: 0,
-        updatedAt: 0,
-      };
-
-      // Calculate HP and resources
-      const maxHP = template.calculateMaxHP(tempChar, 1);
-      let resources: Record<string, number> | undefined;
-      let maxResources: Record<string, number> | undefined;
-
-      if (template.resources && template.calculateMaxResources) {
-        maxResources = template.calculateMaxResources(tempChar, 1);
-        resources = { ...maxResources };
-      }
-
+      const { getMinXPForLevel } = await import('../services/game/experience-calculator');
       const newCharacter = await createCharacter({
         campaignId,
         name,
-        level: 1,
-        experience: 0,
+        level,
+        experience: getMinXPForLevel(level),
         attributes,
-        hitPoints: maxHP,
-        maxHitPoints: maxHP,
-        resources,
-        maxResources,
+        hitPoints,
+        maxHitPoints: hitPoints,
         backstory,
         personality,
         goals,
         fears,
+        inventory: inventory ?? [],
       });
 
       return newCharacter;

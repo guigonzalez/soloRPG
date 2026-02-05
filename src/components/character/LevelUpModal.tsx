@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
-import { getSystemTemplate, type SystemTemplate } from '../../services/game/attribute-templates';
+import { getSheetPreset, type SheetPreset } from '../../services/game/sheet-presets';
 import { t } from '../../services/i18n/use-i18n';
 import type { Character } from '../../types/models';
 
@@ -22,7 +22,7 @@ export function LevelUpModal({
   attributePoints,
   onConfirm,
 }: LevelUpModalProps) {
-  const template: SystemTemplate = getSystemTemplate(campaignSystem);
+  const preset: SheetPreset = getSheetPreset(campaignSystem);
 
   // Track how many points have been allocated to each attribute
   const [pointsAllocated, setPointsAllocated] = useState<Record<string, number>>({});
@@ -33,7 +33,7 @@ export function LevelUpModal({
 
   // Handle incrementing an attribute
   const handleIncrement = (attrName: string) => {
-    const attrDef = template.attributes.find((a) => a.name === attrName);
+    const attrDef = preset.attributes.find((a) => a.name === attrName);
     if (!attrDef) return;
 
     // Check if we have points remaining
@@ -124,11 +124,11 @@ export function LevelUpModal({
                 gap: '16px',
               }}
             >
-              {template.attributes.map((attrDef) => {
+              {preset.attributes.map((attrDef) => {
                 const currentValue = character.attributes[attrDef.name] || 0;
                 const allocated = pointsAllocated[attrDef.name] || 0;
                 const newValue = currentValue + allocated;
-                const modifier = template.modifierCalculation?.(newValue);
+                const modifier = preset.modifierCalculation?.(newValue);
 
                 return (
                   <div

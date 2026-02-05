@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import {
-  getSystemTemplate,
-  isValidAttributeValue,
+  getSheetPreset,
   calculateTotalPointCost,
-  isValidAttributeChange,
   type AttributeDefinition,
-  type SystemTemplate
-} from '../../services/game/attribute-templates';
+  type SheetPreset,
+} from '../../services/game/sheet-presets';
+import { STARTING_ITEMS, createInventoryItem } from '../../services/game/inventory';
+import type { InventoryItem } from '../../types/models';
 import { t } from '../../services/i18n/use-i18n';
 import { getGameEngine } from '../../services/game/game-engine';
 
@@ -18,10 +18,13 @@ interface CharacterCreationProps {
   onConfirm: (
     name: string,
     attributes: Record<string, number>,
+    hitPoints: number,
+    level: number,
     backstory?: string,
     personality?: string,
     goals?: string,
-    fears?: string
+    fears?: string,
+    inventory?: InventoryItem[]
   ) => void;
   onCancel: () => void;
 }
@@ -37,7 +40,7 @@ export function CharacterCreation({
   onConfirm,
   onCancel,
 }: CharacterCreationProps) {
-  const template: SystemTemplate = getSystemTemplate(campaignSystem);
+  const preset: SheetPreset = getSheetPreset(campaignSystem);
 
   // Generate suggested name based on theme
   const suggestName = () => {
@@ -61,11 +64,24 @@ export function CharacterCreation({
   const [characterName, setCharacterName] = useState<string>(suggestName());
   const [attributes, setAttributes] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
-    template.attributes.forEach(attr => {
+    preset.attributes.forEach(attr => {
       initial[attr.name] = attr.defaultValue;
     });
     return initial;
   });
+
+  // HP and Level (player-defined during creation)
+  const [hitPoints, setHitPoints] = useState<number>(10); // Default starting HP
+  const [level, setLevel] = useState<number>(1); // Starting level (affects narrative difficulty)
+
+  // Calculate total points based on level
+  // Level 1 = 40 points (base)
+  // Each additional level = +2 points (matching levelUpPoints)
+  const calculatePointsForLevel = (currentLevel: number): number => {
+    const basePoints = preset.pointBuy?.totalPoints || 40;
+    const levelUpPoints = preset.levelUpPoints || 2;
+    return basePoints + ((currentLevel - 1) * levelUpPoints);
+  };
 
   // Backstory and personality fields
   const [backstory, setBackstory] = useState<string>('');
@@ -74,24 +90,39 @@ export function CharacterCreation({
   const [fears, setFears] = useState<string>('');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'basic' | 'attributes' | 'background'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'attributes' | 'inventory' | 'background'>('basic');
+
+  // Inventory: track selected items and quantities
+  const [selectedItems, setSelectedItems] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = {};
+    STARTING_ITEMS.forEach((item) => {
+      initial[item.id] = 0;
+    });
+    return initial;
+  });
 
   // AI generation state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Handle attribute change with validation
   const handleAttributeChange = (attrName: string, delta: number) => {
-    const attrDef = template.attributes.find(a => a.name === attrName);
+    const attrDef = preset.attributes.find(a => a.name === attrName);
     if (!attrDef) return;
 
     const newValue = attributes[attrName] + delta;
 
     // Check basic attribute limits
-    if (!isValidAttributeValue(newValue, attrDef)) return;
+    if (newValue < attrDef.minValue || newValue > attrDef.maxValue) return;
 
-    // Check point-buy limits if system uses it
-    if (template.pointBuy && !isValidAttributeChange(attributes, attrName, newValue, template)) {
-      return; // Would exceed point budget
+    // Check point-buy limits if system uses it (with level-adjusted total)
+    if (preset.pointBuy) {
+      const testAttributes = { ...attributes, [attrName]: newValue };
+      const totalCost = calculateTotalPointCost(testAttributes, preset);
+      const totalPointsForLevel = calculatePointsForLevel(level);
+
+      if (totalCost > totalPointsForLevel) {
+        return; // Would exceed point budget for this level
+      }
     }
 
     setAttributes(prev => ({
@@ -104,7 +135,7 @@ export function CharacterCreation({
   const handleRandomize = () => {
     const newAttributes: Record<string, number> = {};
 
-    template.attributes.forEach(attr => {
+    preset.attributes.forEach(attr => {
       // Generate random value within range
       // For D&D-like systems, simulate 3d6 or 4d6 drop lowest
       const range = attr.maxValue - attr.minValue;
@@ -163,6 +194,18 @@ export function CharacterCreation({
     }
   };
 
+  // Build inventory from selected items
+  const buildInventory = (): InventoryItem[] => {
+    const items: InventoryItem[] = [];
+    for (const [itemId, qty] of Object.entries(selectedItems)) {
+      if (qty > 0) {
+        const invItem = createInventoryItem(itemId, qty);
+        if (invItem) items.push(invItem);
+      }
+    }
+    return items;
+  };
+
   // Handle confirm
   const handleConfirm = () => {
     if (!characterName.trim()) {
@@ -173,10 +216,13 @@ export function CharacterCreation({
     onConfirm(
       characterName.trim(),
       attributes,
+      hitPoints,
+      level,
       backstory.trim() || undefined,
       personality.trim() || undefined,
       goals.trim() || undefined,
-      fears.trim() || undefined
+      fears.trim() || undefined,
+      buildInventory()
     );
   };
 
@@ -244,6 +290,23 @@ export function CharacterCreation({
               {t('characterCreation.attributesTab')}
             </button>
             <button
+              onClick={() => setActiveTab('inventory')}
+              style={{
+                flex: 1,
+                padding: '12px',
+                fontSize: '10px',
+                fontFamily: '"Press Start 2P", monospace',
+                backgroundColor: activeTab === 'inventory' ? '#9cd84e' : '#0f380f',
+                color: activeTab === 'inventory' ? '#0f380f' : '#9cd84e',
+                border: 'none',
+                borderBottom: activeTab === 'inventory' ? 'none' : '2px solid #9cd84e',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('characterCreation.inventoryTab')}
+            </button>
+            <button
               onClick={() => setActiveTab('background')}
               style={{
                 flex: 1,
@@ -272,31 +335,196 @@ export function CharacterCreation({
             {/* Basic Info Tab */}
             {activeTab === 'basic' && (
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  marginBottom: '8px',
-                  color: '#9cd84e',
-                }}>
-                  {t('characterCreation.characterName')}
-                </label>
-                <input
-                  type="text"
-                  value={characterName}
-                  onChange={(e) => setCharacterName(e.target.value)}
-                  placeholder={t('characterCreation.characterNamePlaceholder')}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    fontSize: '16px',
-                    fontFamily: '"Press Start 2P", monospace',
-                    backgroundColor: '#0f380f',
+                {/* Character Name */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    marginBottom: '8px',
                     color: '#9cd84e',
-                    border: '2px solid #9cd84e',
-                    borderRadius: '0',
-                    boxSizing: 'border-box',
-                  }}
-                />
+                  }}>
+                    {t('characterCreation.characterName')}
+                  </label>
+                  <input
+                    type="text"
+                    value={characterName}
+                    onChange={(e) => setCharacterName(e.target.value)}
+                    placeholder={t('characterCreation.characterNamePlaceholder')}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '16px',
+                      fontFamily: '"Press Start 2P", monospace',
+                      backgroundColor: '#0f380f',
+                      color: '#9cd84e',
+                      border: '2px solid #9cd84e',
+                      borderRadius: '0',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {/* Hit Points */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    marginBottom: '8px',
+                    color: '#9cd84e',
+                  }}>
+                    Hit Points (HP)
+                  </label>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#6a8f3a',
+                    marginBottom: '8px',
+                  }}>
+                    Define your character's starting health. Recommended: 10-20 for balanced gameplay.
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}>
+                    <button
+                      onClick={() => setHitPoints(Math.max(1, hitPoints - 5))}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={hitPoints}
+                      onChange={(e) => setHitPoints(Math.max(1, parseInt(e.target.value) || 1))}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        borderRadius: '0',
+                        textAlign: 'center',
+                      }}
+                    />
+                    <button
+                      onClick={() => setHitPoints(Math.min(999, hitPoints + 5))}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Level (Difficulty Engine) */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    marginBottom: '8px',
+                    color: '#9cd84e',
+                  }}>
+                    Starting Level
+                  </label>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#6a8f3a',
+                    marginBottom: '8px',
+                  }}>
+                    Higher levels face greater narrative challenges. Recommended: 1-3 for beginners.
+                    <br />
+                    <strong>Attribute Points: {calculatePointsForLevel(level)}</strong> ({level === 1 ? '40 base' : `40 base + ${(level - 1) * (preset.levelUpPoints || 2)} bonus`})
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}>
+                    <button
+                      onClick={() => setLevel(Math.max(1, level - 1))}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={level}
+                      onChange={(e) => setLevel(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        borderRadius: '0',
+                        textAlign: 'center',
+                      }}
+                    />
+                    <button
+                      onClick={() => setLevel(Math.min(20, level + 1))}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '16px',
+                        fontFamily: '"Press Start 2P", monospace',
+                        backgroundColor: '#0f380f',
+                        color: '#9cd84e',
+                        border: '2px solid #9cd84e',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div style={{
+                    marginTop: '8px',
+                    fontSize: '10px',
+                    color: '#6a8f3a',
+                    padding: '8px',
+                    backgroundColor: '#0f380f',
+                    border: '2px solid #6a8f3a',
+                  }}>
+                    {level === 1 && '⚔️ Beginner: Moderate challenges, learning the ropes'}
+                    {level >= 2 && level <= 3 && '⚔️ Experienced: Balanced difficulty, engaging stories'}
+                    {level >= 4 && level <= 6 && '⚔️⚔️ Veteran: Tough challenges, dramatic stakes'}
+                    {level >= 7 && level <= 9 && '⚔️⚔️⚔️ Elite: Dangerous foes, epic narratives'}
+                    {level >= 10 && '⚔️⚔️⚔️⚔️ Legendary: Extreme peril, world-ending threats'}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -332,9 +560,10 @@ export function CharacterCreation({
                 </div>
 
                 {/* Point-buy counter */}
-                {template.pointBuy && (() => {
-                  const pointsUsed = calculateTotalPointCost(attributes, template);
-                  const pointsRemaining = template.pointBuy.totalPoints - pointsUsed;
+                {preset.pointBuy && (() => {
+                  const pointsUsed = calculateTotalPointCost(attributes, preset);
+                  const totalPointsForLevel = calculatePointsForLevel(level);
+                  const pointsRemaining = totalPointsForLevel - pointsUsed;
                   const isOverBudget = pointsRemaining < 0;
 
                   return (
@@ -348,14 +577,14 @@ export function CharacterCreation({
                       alignItems: 'center',
                     }}>
                       <span style={{ fontSize: '10px', color: '#9cd84e' }}>
-                        Points Available
+                        Points Available (Level {level})
                       </span>
                       <span style={{
                         fontSize: '14px',
                         fontWeight: 'bold',
                         color: isOverBudget ? '#ff6b6b' : '#9cd84e',
                       }}>
-                        {pointsRemaining} / {template.pointBuy.totalPoints}
+                        {pointsRemaining} / {totalPointsForLevel}
                       </span>
                     </div>
                   );
@@ -366,9 +595,9 @@ export function CharacterCreation({
                   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                   gap: '16px',
                 }}>
-                  {template.attributes.map((attrDef: AttributeDefinition) => {
+                  {preset.attributes.map((attrDef: AttributeDefinition) => {
                     const value = attributes[attrDef.name];
-                    const modifier = template.modifierCalculation?.(value);
+                    const modifier = preset.modifierCalculation?.(value);
 
                     return (
                       <div
@@ -468,6 +697,98 @@ export function CharacterCreation({
                           textAlign: 'center',
                         }}>
                           {t('characterCreation.range')}: {attrDef.minValue}-{attrDef.maxValue}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Inventory Tab */}
+            {activeTab === 'inventory' && (
+              <div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#6a8f3a',
+                  marginBottom: '16px',
+                }}>
+                  {t('characterCreation.inventoryHint')}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}>
+                  {STARTING_ITEMS.map((itemDef) => {
+                    const qty = selectedItems[itemDef.id] ?? 0;
+                    return (
+                      <div
+                        key={itemDef.id}
+                        style={{
+                          padding: '12px',
+                          backgroundColor: '#0f380f',
+                          border: '2px solid #9cd84e',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: '180px' }}>
+                          <div style={{ fontSize: '12px', color: '#9cd84e', marginBottom: '4px' }}>
+                            {itemDef.name}
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#6a8f3a' }}>
+                            {itemDef.description}
+                          </div>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}>
+                          <button
+                            onClick={() => setSelectedItems((prev) => ({
+                              ...prev,
+                              [itemDef.id]: Math.max(0, (prev[itemDef.id] ?? 0) - 1),
+                            }))}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              fontSize: '14px',
+                              fontFamily: '"Press Start 2P", monospace',
+                              backgroundColor: '#0f380f',
+                              color: '#9cd84e',
+                              border: '2px solid #9cd84e',
+                              cursor: qty <= 0 ? 'not-allowed' : 'pointer',
+                              opacity: qty <= 0 ? 0.5 : 1,
+                            }}
+                          >
+                            -
+                          </button>
+                          <span style={{ fontSize: '14px', color: '#9cd84e', minWidth: '24px', textAlign: 'center' }}>
+                            {qty}
+                          </span>
+                          <button
+                            onClick={() => setSelectedItems((prev) => ({
+                              ...prev,
+                              [itemDef.id]: (prev[itemDef.id] ?? 0) + 1,
+                            }))}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              fontSize: '14px',
+                              fontFamily: '"Press Start 2P", monospace',
+                              backgroundColor: '#0f380f',
+                              color: '#9cd84e',
+                              border: '2px solid #9cd84e',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
                     );

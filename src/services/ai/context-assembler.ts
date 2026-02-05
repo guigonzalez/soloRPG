@@ -34,8 +34,14 @@ export function assembleContext(messages: Message[]): ClaudeMessage[] {
  * Claude API requirement
  */
 function ensureAlternatingMessages(messages: ClaudeMessage[]): ClaudeMessage[] {
+  // If no messages, start with a default user message
   if (messages.length === 0) {
-    return [];
+    return [
+      {
+        role: 'user',
+        content: 'Begin the adventure.',
+      },
+    ];
   }
 
   const result: ClaudeMessage[] = [];
@@ -103,25 +109,20 @@ export function parseRollRequest(content: string): string | null {
 }
 
 /**
- * Parse XP award from AI response
- * Extracts <xp_award> tags and returns XP amount + clean content
+ * Parse XP change from AI response (gain or loss)
+ * Extracts <xp>X</xp> or <xp>-X</xp> tags
  */
 export function parseXPAward(content: string): {
   cleanContent: string;
   xpAmount: number | null;
 } {
-  // Match <xp_award>X</xp_award> tag
-  const xpMatch = content.match(/<xp_award>(\d+)<\/xp_award>/i);
-
+  const xpMatch = content.match(/<xp>([+-]?\d+)<\/xp>/i);
   if (!xpMatch) {
     return { cleanContent: content, xpAmount: null };
   }
 
   const xpAmount = parseInt(xpMatch[1], 10);
-
-  // Remove <xp_award> tag from content
-  const cleanContent = content.replace(/<xp_award>\d+<\/xp_award>/gi, '').trim();
-
+  const cleanContent = content.replace(/<xp>[+-]?\d+<\/xp>/gi, '').trim();
   return { cleanContent, xpAmount };
 }
 
@@ -161,7 +162,11 @@ export function parseSuggestedActions(content: string): {
   }
 
   // Remove <actions> block from content
-  const cleanContent = content.replace(/<actions>[\s\S]*?<\/actions>/i, '').trim();
+  let cleanContent = content.replace(/<actions>[\s\S]*?<\/actions>/i, '').trim();
+
+  // Also remove any stray <action> tags that appear outside <actions> blocks
+  // This handles cases where AI incorrectly generates orphan action tags
+  cleanContent = cleanContent.replace(/<action\s+[^>]*>[\s\S]*?<\/action>/gi, '').trim();
 
   return { cleanContent, actions };
 }
@@ -170,9 +175,9 @@ export function parseSuggestedActions(content: string): {
  * HP/Resource effect interface
  */
 export interface CharacterEffect {
-  type: 'damage' | 'heal' | 'spend_resource' | 'restore_resource';
+  type: 'damage' | 'damage_roll' | 'heal';
   amount: number;
-  resourceName?: string; // For resource effects
+  rollNotation?: string; // For damage_roll: e.g. "2d6", "1d8+2"
 }
 
 /**
@@ -180,10 +185,9 @@ export interface CharacterEffect {
  * Extracts HP damage/healing and resource management tags
  *
  * Supported tags:
- * - <damage>X</damage> - Apply X damage to character
+ * - <damage>X</damage> - Apply X damage to character (armor reduces)
+ * - <damage_roll>2d6</damage_roll> - Roll dice for damage, system applies (armor reduces)
  * - <heal>X</heal> - Restore X HP to character
- * - <spend_resource name="Sanity">X</spend_resource> - Spend X of resource
- * - <restore_resource name="Magic Points">X</restore_resource> - Restore X of resource
  */
 export function parseCharacterEffects(content: string): {
   cleanContent: string;
@@ -203,6 +207,21 @@ export function parseCharacterEffects(content: string): {
   }
   cleanContent = cleanContent.replace(damageRegex, '').trim();
 
+  // Parse <damage_roll>2d6</damage_roll> or <damage_roll>1d8+2</damage_roll>
+  const damageRollRegex = /<damage_roll>([^<]+)<\/damage_roll>/gi;
+  let damageRollMatch;
+  while ((damageRollMatch = damageRollRegex.exec(content)) !== null) {
+    const notation = damageRollMatch[1].trim();
+    if (/^\d*d\d+([+-]\d+)?$/i.test(notation)) {
+      effects.push({
+        type: 'damage_roll',
+        amount: 0,
+        rollNotation: notation,
+      });
+    }
+  }
+  cleanContent = cleanContent.replace(damageRollRegex, '').trim();
+
   // Parse <heal>X</heal>
   const healRegex = /<heal>(\d+)<\/heal>/gi;
   let healMatch;
@@ -214,29 +233,49 @@ export function parseCharacterEffects(content: string): {
   }
   cleanContent = cleanContent.replace(healRegex, '').trim();
 
-  // Parse <spend_resource name="ResourceName">X</spend_resource>
-  const spendResourceRegex = /<spend_resource\s+name="([^"]+)">(\d+)<\/spend_resource>/gi;
-  let spendMatch;
-  while ((spendMatch = spendResourceRegex.exec(content)) !== null) {
-    effects.push({
-      type: 'spend_resource',
-      amount: -parseInt(spendMatch[2], 10), // Negative for spending
-      resourceName: spendMatch[1],
-    });
-  }
-  cleanContent = cleanContent.replace(spendResourceRegex, '').trim();
-
-  // Parse <restore_resource name="ResourceName">X</restore_resource>
-  const restoreResourceRegex = /<restore_resource\s+name="([^"]+)">(\d+)<\/restore_resource>/gi;
-  let restoreMatch;
-  while ((restoreMatch = restoreResourceRegex.exec(content)) !== null) {
-    effects.push({
-      type: 'restore_resource',
-      amount: parseInt(restoreMatch[2], 10),
-      resourceName: restoreMatch[1],
-    });
-  }
-  cleanContent = cleanContent.replace(restoreResourceRegex, '').trim();
-
   return { cleanContent, effects };
+}
+
+/**
+ * Item drop interface - items the AI grants to the player
+ */
+export interface ItemDrop {
+  itemId: string;
+  quantity: number;
+}
+
+/**
+ * Parse item drops from AI response
+ * Format: <item_drop id="healing_potion" qty="2"/>
+ * or <item_drop id="healing_potion">2</item_drop>
+ */
+export function parseItemDrops(content: string): {
+  cleanContent: string;
+  drops: ItemDrop[];
+} {
+  const drops: ItemDrop[] = [];
+  let cleanContent = content;
+
+  // Format 1: <item_drop id="healing_potion" qty="2"/>
+  const selfClosingRegex = /<item_drop\s+id="([^"]+)"\s+qty="(\d+)"\s*\/>/gi;
+  let match;
+  while ((match = selfClosingRegex.exec(content)) !== null) {
+    drops.push({
+      itemId: match[1],
+      quantity: parseInt(match[2], 10),
+    });
+  }
+  cleanContent = cleanContent.replace(selfClosingRegex, '').trim();
+
+  // Format 2: <item_drop id="healing_potion">2</item_drop>
+  const blockRegex = /<item_drop\s+id="([^"]+)">(\d+)<\/item_drop>/gi;
+  while ((match = blockRegex.exec(content)) !== null) {
+    drops.push({
+      itemId: match[1],
+      quantity: parseInt(match[2], 10),
+    });
+  }
+  cleanContent = cleanContent.replace(blockRegex, '').trim();
+
+  return { cleanContent, drops };
 }

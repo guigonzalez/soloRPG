@@ -38,12 +38,21 @@ export interface Translations {
     startFallback: string;
   };
 
+  gameOver: {
+    title: string;
+    message: string;
+    returnToCampaigns: string;
+  };
+
   // Campaign Creation
   campaignCreation: {
     title: string;
     campaignTitle: string;
     campaignTitlePlaceholder: string;
     system: string;
+    narrativeTheme: string;
+    narrativeThemeNotice: string;
+    selectNarrativeTheme: string;
     theme: string;
     themePlaceholder: string;
     tone: string;
@@ -83,6 +92,8 @@ export interface Translations {
     fearsPlaceholder: string;
     basicTab: string;
     attributesTab: string;
+    inventoryTab: string;
+    inventoryHint: string;
     backgroundTab: string;
     generateWithAI: string;
     generating: string;
@@ -161,6 +172,7 @@ export interface Translations {
   // XP System
   xp: {
     gained: string;
+    lost: string;
     easySuccess: string;
     mediumSuccess: string;
     hardSuccess: string;
@@ -168,15 +180,37 @@ export interface Translations {
     criticalSuccess: string;
     storyProgression: string;
     levelUp: string;
+    levelDown: string;
     youAreNowLevel: string;
   };
 
-  // HP and Resources
+  // HP
   combat: {
     takeDamage: string;
     recover: string;
-    resourceSpent: string;
-    resourceRestored: string;
+    armorReduced: string;
+    damageRoll: string;
+  };
+
+  // Inventory
+    inventory: {
+      title: string;
+      itemAcquired: string;
+      useItem: string;
+      noItems: string;
+      weapon: string;
+      armor: string;
+      equip: string;
+      unequip: string;
+      equipped: string;
+    };
+
+  // Misfortune (Amarra - anti-cheat binding)
+  misfortune: {
+    claimedRollNotice: string;
+    effectiveResult: string;
+    label: string;
+    tooltip: string;
   };
 
   // Settings
@@ -246,11 +280,20 @@ export const translations: Record<Language, Translations> = {
       startFallback: 'Welcome to your {{theme}} adventure in the {{system}} system!\n\nYour journey begins in a world filled with mystery and danger. The tone is {{tone}}, and countless stories await to be told.\n\nWhat would you like to do?',
     },
 
+    gameOver: {
+      title: 'Game Over',
+      message: 'Your character has fallen. Hit points reached zero.',
+      returnToCampaigns: 'Return to campaigns',
+    },
+
     campaignCreation: {
       title: 'Create New Campaign',
       campaignTitle: 'Campaign Title',
       campaignTitlePlaceholder: 'Enter campaign name...',
       system: 'RPG System',
+      narrativeTheme: 'Narrative Theme',
+      narrativeThemeNotice: 'This is narrative inspiration only. SoloRPG uses its own universal mechanics (d20 + modifier). The system choice only affects attribute names and story flavor - not game rules.',
+      selectNarrativeTheme: 'Select a narrative theme...',
       theme: 'Theme & Setting',
       themePlaceholder: 'Describe the world and story...',
       tone: 'Tone',
@@ -288,6 +331,8 @@ export const translations: Record<Language, Translations> = {
       fearsPlaceholder: 'What does your character fear?',
       basicTab: 'Basic',
       attributesTab: 'Attributes',
+      inventoryTab: 'Inventory',
+      inventoryHint: 'Select starting items. You can add more during the adventure when the narrator drops them.',
       backgroundTab: 'Background',
       generateWithAI: 'Generate with AI',
       generating: 'Generating...',
@@ -359,6 +404,7 @@ export const translations: Record<Language, Translations> = {
 
     xp: {
       gained: '+{amount} XP',
+      lost: '-{amount} XP',
       easySuccess: 'Easy success',
       mediumSuccess: 'Medium success',
       hardSuccess: 'Hard success',
@@ -366,14 +412,34 @@ export const translations: Record<Language, Translations> = {
       criticalSuccess: 'Critical!',
       storyProgression: 'Story progression',
       levelUp: '🎉 LEVEL UP! You are now Level {level}!',
+      levelDown: '📉 Level down! Now Level {level}',
       youAreNowLevel: 'You are now Level {level}',
     },
 
     combat: {
       takeDamage: '💥 You take {amount} damage!',
       recover: '💚 You recover {amount} HP!',
-      resourceSpent: '🔵 {resource} {amount} ({spent} spent)',
-      resourceRestored: '🔵 {resource} +{amount} restored!',
+      armorReduced: 'armor -{reduced} (was {original})',
+      damageRoll: 'Damage roll {notation}: {result}',
+    },
+
+    inventory: {
+      title: 'Inventory',
+      itemAcquired: 'Acquired: {name} x{quantity}',
+      useItem: 'Use',
+      noItems: 'No items',
+      weapon: 'Weapon',
+      armor: 'Armor',
+      equip: 'Equip',
+      unequip: 'Unequip',
+      equipped: 'Equipped',
+    },
+
+    misfortune: {
+      claimedRollNotice: '⚠️ Claimed roll detected. Misfortune +1 ({stacks} total). Future rolls penalized.',
+      effectiveResult: 'effective {value}',
+      label: 'Misfortune',
+      tooltip: 'Penalty from claiming roll results. Decays with honest rolls.',
     },
 
     settings: {
@@ -440,11 +506,20 @@ export const translations: Record<Language, Translations> = {
       startFallback: 'Bem-vindo à sua aventura {{theme}} no sistema {{system}}!\n\nSua jornada começa em um mundo cheio de mistério e perigo. O tom é {{tone}}, e incontáveis histórias aguardam para serem contadas.\n\nO que você gostaria de fazer?',
     },
 
+    gameOver: {
+      title: 'Game Over',
+      message: 'Seu personagem caiu. Os pontos de vida chegaram a zero.',
+      returnToCampaigns: 'Voltar às campanhas',
+    },
+
     campaignCreation: {
       title: 'Criar Nova Campanha',
       campaignTitle: 'Título da Campanha',
       campaignTitlePlaceholder: 'Digite o nome da campanha...',
       system: 'Sistema de RPG',
+      narrativeTheme: 'Tema Narrativo',
+      narrativeThemeNotice: 'Isto é apenas inspiração narrativa. SoloRPG usa suas próprias mecânicas universais (d20 + modificador). A escolha do sistema afeta apenas nomes de atributos, recursos e sabor narrativo - não as regras do jogo.',
+      selectNarrativeTheme: 'Selecione um tema narrativo...',
       theme: 'Tema e Cenário',
       themePlaceholder: 'Descreva o mundo e a história...',
       tone: 'Tom',
@@ -482,6 +557,8 @@ export const translations: Record<Language, Translations> = {
       fearsPlaceholder: 'Do que seu personagem tem medo?',
       basicTab: 'Básico',
       attributesTab: 'Atributos',
+      inventoryTab: 'Inventário',
+      inventoryHint: 'Selecione os itens iniciais. Você pode obter mais durante a aventura quando o narrador os conceder.',
       backgroundTab: 'História',
       generateWithAI: 'Gerar com IA',
       generating: 'Gerando...',
@@ -553,6 +630,7 @@ export const translations: Record<Language, Translations> = {
 
     xp: {
       gained: '+{amount} XP',
+      lost: '-{amount} XP',
       easySuccess: 'Sucesso fácil',
       mediumSuccess: 'Sucesso médio',
       hardSuccess: 'Sucesso difícil',
@@ -560,14 +638,34 @@ export const translations: Record<Language, Translations> = {
       criticalSuccess: 'Crítico!',
       storyProgression: 'Progressão da história',
       levelUp: '🎉 SUBIU DE NÍVEL! Você agora é Nível {level}!',
+      levelDown: '📉 Desceu de nível! Agora Nível {level}',
       youAreNowLevel: 'Você agora é Nível {level}',
     },
 
     combat: {
       takeDamage: '💥 Você sofreu {amount} de dano!',
       recover: '💚 Você recuperou {amount} de HP!',
-      resourceSpent: '🔵 {resource} {amount} ({spent} gasto)',
-      resourceRestored: '🔵 {resource} +{amount} restaurado!',
+      armorReduced: 'armadura -{reduced} (era {original})',
+      damageRoll: 'Rolagem de dano {notation}: {result}',
+    },
+
+    inventory: {
+      title: 'Inventário',
+      itemAcquired: 'Adquirido: {name} x{quantity}',
+      useItem: 'Usar',
+      noItems: 'Nenhum item',
+      weapon: 'Arma',
+      armor: 'Armadura',
+      equip: 'Equipar',
+      unequip: 'Desequipar',
+      equipped: 'Equipado',
+    },
+
+    misfortune: {
+      claimedRollNotice: '⚠️ Rolagem alegada detectada. Azar +1 ({stacks} total). Próximas rolagens penalizadas.',
+      effectiveResult: 'efetivo {value}',
+      label: 'Azar',
+      tooltip: 'Penalidade por alegar resultados. Decai com rolagens honestas.',
     },
 
     settings: {
@@ -634,11 +732,20 @@ export const translations: Record<Language, Translations> = {
       startFallback: '¡Bienvenido a tu aventura {{theme}} en el sistema {{system}}!\n\nTu viaje comienza en un mundo lleno de misterio y peligro. El tono es {{tone}}, e innumerables historias esperan ser contadas.\n\n¿Qué te gustaría hacer?',
     },
 
+    gameOver: {
+      title: 'Game Over',
+      message: 'Tu personaje ha caído. Los puntos de vida llegaron a cero.',
+      returnToCampaigns: 'Volver a campañas',
+    },
+
     campaignCreation: {
       title: 'Crear Nueva Campaña',
       campaignTitle: 'Título de la Campaña',
       campaignTitlePlaceholder: 'Ingresa el nombre de la campaña...',
       system: 'Sistema de RPG',
+      narrativeTheme: 'Tema Narrativo',
+      narrativeThemeNotice: 'Esto es solo inspiración narrativa. SoloRPG usa sus propias mecánicas universales (d20 + modificador). La elección del sistema solo afecta nombres de atributos, recursos y sabor narrativo - no las reglas del juego.',
+      selectNarrativeTheme: 'Selecciona un tema narrativo...',
       theme: 'Tema y Escenario',
       themePlaceholder: 'Describe el mundo y la historia...',
       tone: 'Tono',
@@ -676,6 +783,8 @@ export const translations: Record<Language, Translations> = {
       fearsPlaceholder: '¿A qué le teme tu personaje?',
       basicTab: 'Básico',
       attributesTab: 'Atributos',
+      inventoryTab: 'Inventario',
+      inventoryHint: 'Selecciona los objetos iniciales. Puedes obtener más durante la aventura cuando el narrador los conceda.',
       backgroundTab: 'Historia',
       generateWithAI: 'Generar con IA',
       generating: 'Generando...',
@@ -747,6 +856,7 @@ export const translations: Record<Language, Translations> = {
 
     xp: {
       gained: '+{amount} XP',
+      lost: '-{amount} XP',
       easySuccess: 'Éxito fácil',
       mediumSuccess: 'Éxito medio',
       hardSuccess: 'Éxito difícil',
@@ -754,14 +864,34 @@ export const translations: Record<Language, Translations> = {
       criticalSuccess: '¡Crítico!',
       storyProgression: 'Progreso de la historia',
       levelUp: '¡SUBISTE DE NIVEL! ¡Ahora eres Nivel {level}!',
+      levelDown: '📉 ¡Bajaste de nivel! Ahora Nivel {level}',
       youAreNowLevel: 'Ahora eres Nivel {level}',
     },
 
     combat: {
       takeDamage: '💥 ¡Recibes {amount} de daño!',
       recover: '💚 ¡Recuperas {amount} de HP!',
-      resourceSpent: '🔵 {resource} {amount} ({spent} gastado)',
-      resourceRestored: '🔵 ¡{resource} +{amount} restaurado!',
+      armorReduced: 'armadura -{reduced} (era {original})',
+      damageRoll: 'Tirada de daño {notation}: {result}',
+    },
+
+    inventory: {
+      title: 'Inventario',
+      itemAcquired: 'Adquirido: {name} x{quantity}',
+      useItem: 'Usar',
+      noItems: 'Sin objetos',
+      weapon: 'Arma',
+      armor: 'Armadura',
+      equip: 'Equipar',
+      unequip: 'Desequipar',
+      equipped: 'Equipado',
+    },
+
+    misfortune: {
+      claimedRollNotice: '⚠️ Tirada alegada detectada. Mala suerte +1 ({stacks} total). Próximas tiradas penalizadas.',
+      effectiveResult: 'efectivo {value}',
+      label: 'Mala suerte',
+      tooltip: 'Penalización por alegar resultados. Decae con tiradas honestas.',
     },
 
     settings: {

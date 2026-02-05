@@ -82,11 +82,9 @@ export interface Character {
   // Example D&D: { strength: 10, dexterity: 12, constitution: 11, intelligence: 16, wisdom: 13, charisma: 8 }
   // Example CoC: { STR: 55, DEX: 60, INT: 70, CON: 50, SIZ: 65, APP: 50, POW: 60, EDU: 65 }
 
-  // Health and Resources (system-specific)
+  // Health
   hitPoints: number; // Current HP
   maxHitPoints: number; // Maximum HP
-  resources?: Record<string, number>; // System-specific resources (e.g., Sanity for CoC, Magic Points)
-  maxResources?: Record<string, number>; // Maximum values for resources
 
   // Character Background and Personality
   backstory?: string; // Character's background story
@@ -94,8 +92,34 @@ export interface Character {
   goals?: string; // Character's goals and motivations
   fears?: string; // Character's fears or weaknesses
 
+  // Misfortune (Amarra) - bad luck stacks from claiming roll results in text
+  misfortune?: number; // 0-5, penalizes future rolls, decays on honest rolls
+
+  // Inventory - items from creation + drops during gameplay
+  inventory?: InventoryItem[];
+
+  // Equipped weapon/armor (itemId from definitions)
+  equippedWeapon?: string;
+  equippedArmor?: string;
+
   createdAt: number;
   updatedAt: number;
+}
+
+/**
+ * Item in character inventory
+ */
+export type ItemType = 'consumable' | 'equipment' | 'other';
+
+export interface InventoryItem {
+  id: string;
+  itemId: string; // Reference to item definition (e.g. 'healing_potion')
+  name: string;
+  type: ItemType;
+  quantity: number; // For consumables; equipment is 1
+  /** Effect when used: heal:X, roll_bonus:X, modifier:attr:X */
+  effect?: string;
+  description?: string;
 }
 
 // Helper types for creation (without generated fields)

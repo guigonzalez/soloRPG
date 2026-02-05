@@ -1,5 +1,5 @@
 import type { Character } from '../../types/models';
-import { getSystemTemplate, getAttributeModifier } from '../../services/game/attribute-templates';
+import { getSheetPreset } from '../../services/game/sheet-presets';
 
 interface AttributeRollPromptProps {
   attributeName: string;
@@ -26,10 +26,10 @@ export function AttributeRollPrompt({
 }: AttributeRollPromptProps) {
   if (!character) return <span>**{attributeName} ({attributeAbbr})**</span>;
 
-  const template = getSystemTemplate(campaignSystem);
+  const preset = getSheetPreset(campaignSystem);
 
   // Find the attribute definition
-  const attrDef = template.attributes.find(
+  const attrDef = preset.attributes.find(
     a => a.name.toLowerCase() === attributeAbbr.toLowerCase() ||
          a.displayName.toLowerCase() === attributeAbbr.toLowerCase()
   );
@@ -39,7 +39,7 @@ export function AttributeRollPrompt({
   }
 
   const value = character.attributes[attrDef.name] || 0;
-  const modifier = getAttributeModifier(value, template);
+  const modifier = preset.modifierCalculation?.(value);
   const modifierStr = modifier !== undefined && modifier !== 0
     ? (modifier > 0 ? `+${modifier}` : `${modifier}`)
     : '';
@@ -49,7 +49,7 @@ export function AttributeRollPrompt({
 
     // Roll d20 + modifier for most systems (D&D, Pathfinder, etc.)
     // For percentage systems (Call of Cthulhu), roll d100
-    const rollNotation = template.modifierCalculation
+    const rollNotation = preset.modifierCalculation
       ? `1d20${modifierStr}`
       : '1d100';
 

@@ -51,6 +51,16 @@ function App() {
   // Use real AI
   const { sendMessage, sendActionWithRoll, startCampaign, resendMessage, continueNarration } = useAI(activeCampaignId);
 
+  // Game over when character has 0 HP (must be before any early returns - Rules of Hooks)
+  const isGameOver = _character != null && _character.hitPoints <= 0;
+
+  // Clear suggested actions when game over
+  useEffect(() => {
+    if (isGameOver) {
+      useChatStore.getState().setSuggestedActions([]);
+    }
+  }, [isGameOver]);
+
   // Check if API key is configured on mount
   useEffect(() => {
     setShowApiKeySetup(!hasApiKey());
@@ -236,13 +246,16 @@ function App() {
   const handleCharacterCreation = async (
     name: string,
     attributes: Record<string, number>,
+    hitPoints: number,
+    level: number,
     backstory?: string,
     personality?: string,
     goals?: string,
-    fears?: string
+    fears?: string,
+    inventory?: import('./types/models').InventoryItem[]
   ) => {
     try {
-      await handleCreateCharacter(name, attributes, backstory, personality, goals, fears);
+      await handleCreateCharacter(name, attributes, hitPoints, level, backstory, personality, goals, fears, inventory);
       // Character is now created, component will re-render
     } catch (err) {
       console.error('Failed to create character:', err);
@@ -363,11 +376,13 @@ function App() {
           onContinueNarration={continueNarration}
           isAIResponding={isAIResponding}
           streamedContent={streamedContent}
-          suggestedActions={suggestedActions}
+          suggestedActions={isGameOver ? [] : suggestedActions}
           onSelectAction={handleSelectAction}
           character={_character}
           campaignSystem={activeCampaign.system}
           onAttributeRoll={handleAttributeRoll}
+          isGameOver={isGameOver}
+          onBackToCampaigns={handleBackToCampaigns}
         />
       </div>
 

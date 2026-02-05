@@ -90,7 +90,7 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
 
           <div className="form-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label className="form-label" style={{ margin: 0 }}>{t('campaignCreation.system')}</label>
+              <label className="form-label" style={{ margin: 0 }}>{t('campaignCreation.narrativeTheme')}</label>
               <button
                 type="button"
                 className="retro-button"
@@ -105,23 +105,34 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
                 {isGenerating ? '⏳ ' + t('campaignCreation.creating') : '✨ Generate with AI'}
               </button>
             </div>
+            <div style={{
+              fontSize: '10px',
+              color: '#6a8f3a',
+              marginBottom: '8px',
+              lineHeight: '1.4',
+              padding: '8px',
+              backgroundColor: 'rgba(106, 143, 58, 0.1)',
+              border: '1px solid #6a8f3a',
+            }}>
+              ℹ️ <strong>{t('campaignCreation.narrativeThemeNotice')}</strong>
+            </div>
             <select
               className="form-select"
               value={system}
               onChange={(e) => setSystem(e.target.value)}
               required
             >
-              <option value="">Select a system...</option>
-              <option value="D&D 5e">D&D 5e</option>
-              <option value="Pathfinder 2e">Pathfinder 2e</option>
-              <option value="Call of Cthulhu">Call of Cthulhu</option>
-              <option value="Cyberpunk RED">Cyberpunk RED</option>
-              <option value="Vampire: The Masquerade">Vampire: The Masquerade</option>
-              <option value="Fate Core">Fate Core</option>
-              <option value="Powered by the Apocalypse">Powered by the Apocalypse</option>
-              <option value="OSR (Old School Renaissance)">OSR (Old School Renaissance)</option>
-              <option value="Generic/Freeform">Generic/Freeform</option>
-              <option value="Other">Other</option>
+              <option value="">{t('campaignCreation.selectNarrativeTheme')}</option>
+              <option value="D&D 5e">D&D-Style Fantasy</option>
+              <option value="Pathfinder 2e">Pathfinder Fantasy</option>
+              <option value="Call of Cthulhu">Cosmic Horror (Lovecraftian)</option>
+              <option value="Cyberpunk RED">Dark Future (Cyberpunk)</option>
+              <option value="Vampire: The Masquerade">Gothic Vampire</option>
+              <option value="Fate Core">Narrative-Focused</option>
+              <option value="Powered by the Apocalypse">Story-Driven</option>
+              <option value="OSR (Old School Renaissance)">Old-School Adventure</option>
+              <option value="Generic/Freeform">Generic Adventure</option>
+              <option value="Other">Other Theme</option>
             </select>
           </div>
           {errors.system && (

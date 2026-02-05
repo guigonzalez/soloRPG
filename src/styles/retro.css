@@ -1,22 +1,44 @@
 /**
- * 8-bit Retro Styling for SoloRPG
+ * 8-bit Retro Styling for SoloRPG (A11y-first)
  */
 
 :root {
-  /* 8-bit Green Theme (Default) */
-  --color-bg-primary: #0f380f;
-  --color-bg-secondary: #306230;
-  --color-bg-tertiary: #0f380f;
-  --color-text-primary: #9bbc0f;
-  --color-text-secondary: #8bac0f;
-  --color-border: #8bac0f;
-  --color-accent: #9bbc0f;
-  --color-shadow: #0f380f;
+  /* Core palette (Accessible 8-bit Green Theme) */
+  --color-bg-primary: #0b1f0b;
+  --color-bg-secondary: #173a17;
+  --color-bg-tertiary: #102b10;
+
+  --color-text-primary: #e6f2c2;
+  --color-text-secondary: #b7cfa3;
+
+  --color-border: #6fae4f;
+  --color-accent: #8cff3a;
+
+  /* Useful semantic tokens (avoid future hacks) */
+  --color-surface: var(--color-bg-secondary);
+  --color-surface-alt: var(--color-bg-tertiary);
+  --color-muted: rgba(230, 242, 194, 0.12); /* subtle overlays, separators */
+  --color-overlay: rgba(0, 0, 0, 0.55);     /* modals, dimming */
+  --color-focus-ring: var(--color-accent);
+
+  /* Shadows (pixelated effect) */
+  --color-shadow: #00000080;
+  --shadow-sm: 2px 2px 0 var(--color-shadow);
+  --shadow-md: 4px 4px 0 var(--color-shadow);
+  --shadow-lg: 6px 6px 0 var(--color-shadow);
 
   /* UI Colors */
-  --color-user-message: #306230;
-  --color-ai-message: #0f380f;
-  --color-system-message: #8bac0f20;
+  --color-user-message: #1f4d1f;
+  --color-ai-message: #132e13;
+  --color-system-message: rgba(140, 255, 58, 0.15);
+
+  /* Interaction colors (must stay readable in all themes) */
+  --color-selection-bg: var(--color-accent);
+  --color-selection-fg: #0b1f0b;
+
+  --color-scroll-track: var(--color-bg-secondary);
+  --color-scroll-thumb: var(--color-border);
+  --color-scroll-thumb-hover: var(--color-accent);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -35,39 +57,71 @@
   --font-size-md: 14px;
   --font-size-lg: 16px;
   --font-size-xl: 20px;
-
-  /* Shadows (pixelated effect) */
-  --shadow-sm: 2px 2px 0 var(--color-shadow);
-  --shadow-md: 4px 4px 0 var(--color-shadow);
-  --shadow-lg: 6px 6px 0 var(--color-shadow);
 }
 
-/* 8-bit Amber Theme */
+/* 8-bit Amber Theme (A11y tuned) */
 [data-theme="8bit-amber"] {
-  --color-bg-primary: #2b1d0e;
-  --color-bg-secondary: #5c4a2f;
-  --color-bg-tertiary: #2b1d0e;
-  --color-text-primary: #ffb000;
-  --color-text-secondary: #ffa000;
-  --color-border: #ffa000;
+  --color-bg-primary: #1f160a;
+  --color-bg-secondary: #2d200f;
+  --color-bg-tertiary: #261b0c;
+
+  /* Avoid pure orange for long text (fatigue + contrast traps) */
+  --color-text-primary: #ffe7b8;
+  --color-text-secondary: #f4c97a;
+
+  --color-border: #d39a2a;
   --color-accent: #ffb000;
-  --color-shadow: #1a1106;
-  --color-user-message: #5c4a2f;
-  --color-ai-message: #2b1d0e;
+
+  --color-surface: var(--color-bg-secondary);
+  --color-surface-alt: var(--color-bg-tertiary);
+  --color-muted: rgba(255, 231, 184, 0.12);
+  --color-overlay: rgba(0, 0, 0, 0.55);
+  --color-focus-ring: var(--color-accent);
+
+  --color-shadow: #00000080;
+
+  --color-user-message: #3a2a12;
+  --color-ai-message: #261b0c;
+  --color-system-message: rgba(255, 176, 0, 0.16);
+
+  --color-selection-bg: var(--color-accent);
+  --color-selection-fg: #1f160a;
+
+  --color-scroll-track: var(--color-bg-secondary);
+  --color-scroll-thumb: var(--color-border);
+  --color-scroll-thumb-hover: var(--color-accent);
 }
 
 /* Classic Theme (Black & White) */
 [data-theme="classic"] {
   --color-bg-primary: #000000;
-  --color-bg-secondary: #1a1a1a;
+  --color-bg-secondary: #141414;
   --color-bg-tertiary: #0a0a0a;
+
   --color-text-primary: #ffffff;
   --color-text-secondary: #cccccc;
+
   --color-border: #ffffff;
   --color-accent: #ffffff;
-  --color-shadow: #000000;
+
+  --color-surface: var(--color-bg-secondary);
+  --color-surface-alt: var(--color-bg-tertiary);
+  --color-muted: rgba(255, 255, 255, 0.12);
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-focus-ring: #ffffff;
+
+  --color-shadow: #00000080;
+
   --color-user-message: #1a1a1a;
-  --color-ai-message: #000000;
+  --color-ai-message: #0a0a0a;
+  --color-system-message: rgba(255, 255, 255, 0.12);
+
+  --color-selection-bg: #ffffff;
+  --color-selection-fg: #000000;
+
+  --color-scroll-track: #141414;
+  --color-scroll-thumb: #cccccc;
+  --color-scroll-thumb-hover: #ffffff;
 }
 
 /* Base Styles */
@@ -83,8 +137,11 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
   line-height: 1.6;
+
+  /* Keep the retro vibe, but avoid unreadable rendering on some systems */
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
+
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -98,67 +155,84 @@ img {
   image-rendering: crisp-edges;
 }
 
-/* Scrollbar styling (retro) */
+/* Scrollbar styling (retro + readable) */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: var(--color-scroll-track);
   border: var(--border-width) solid var(--color-border);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-accent);
+  background: var(--color-scroll-thumb);
   border: var(--border-width) solid var(--color-border);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-primary);
+  background: var(--color-scroll-thumb-hover);
 }
 
 /* Selection */
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-bg-primary);
+  background: var(--color-selection-bg);
+  color: var(--color-selection-fg);
 }
 
-/* Focus outline (pixelated) */
+/* Focus outline (keyboard accessibility first) */
+:focus {
+  outline: none;
+}
+
+/* Use both ring + offset so it’s visible on any background */
 :focus-visible {
-  outline: var(--border-width) dashed var(--color-accent);
-  outline-offset: 2px;
+  outline: var(--border-width) dashed var(--color-focus-ring);
+  outline-offset: 3px;
 }
 
 /* Retro Button */
 .retro-button {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+
   color: var(--color-text-primary);
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-surface);
+
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
+
   transition: none;
   box-shadow: var(--shadow-sm);
+
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
+/* Hover: ensure text remains readable */
 .retro-button:hover:not(:disabled) {
   background-color: var(--color-accent);
-  color: var(--color-bg-primary);
+  color: var(--color-selection-fg);
   transform: translate(2px, 2px);
   box-shadow: none;
 }
 
+/* Active: keep pressed state consistent */
 .retro-button:active:not(:disabled) {
   transform: translate(2px, 2px);
   box-shadow: none;
 }
 
+/* Focus: add an inner cue too (not only outline) */
+.retro-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-focus-ring);
+}
+
+/* Disabled */
 .retro-button:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -166,8 +240,10 @@ img {
 .retro-input {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
+
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-sm) var(--spacing-md);
   width: 100%;
@@ -175,27 +251,33 @@ img {
 
 .retro-input::placeholder {
   color: var(--color-text-secondary);
-  opacity: 0.6;
+  opacity: 0.75; /* higher than before for readability */
 }
 
 .retro-input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: inset var(--shadow-sm);
+}
+
+/* Stronger focus for keyboard users */
+.retro-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-focus-ring);
 }
 
 /* Retro Card */
 .retro-card {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-md);
   box-shadow: var(--shadow-md);
 }
 
+/* Card title */
 .retro-card-title {
   font-size: var(--font-size-lg);
   font-weight: bold;
   margin-bottom: var(--spacing-sm);
+
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -226,14 +308,13 @@ img {
 .scanlines::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+
   background: linear-gradient(
     transparent 50%,
-    rgba(0, 0, 0, 0.05) 50%
+    rgba(0, 0, 0, 0.06) 50%
   );
+
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 1;

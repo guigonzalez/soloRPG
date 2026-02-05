@@ -7,14 +7,23 @@ import * as recapRepo from '../services/storage/recap-repo';
 import * as entityRepo from '../services/storage/entity-repo';
 import * as factRepo from '../services/storage/fact-repo';
 import * as rollRepo from '../services/storage/roll-repo';
+import * as characterRepo from '../services/storage/character-repo';
 import { deleteMessagesAfterTimestamp } from '../services/storage/message-repo';
 import { deleteRollsAfterTimestamp } from '../services/storage/roll-repo';
 import { isValidDiceNotation } from '../services/dice/dice-parser';
 import { rollDice } from '../services/dice/dice-roller';
-import { calculateRollXP } from '../services/game/experience-calculator';
-import { getSystemTemplate } from '../services/game/attribute-templates';
+// XP comes from <xp> tags in AI responses (gain or loss per action)
+import { getSheetPreset } from '../services/game/sheet-presets';
+import {
+  detectClaimedRoll,
+  applyMisfortuneToRoll,
+  MISFORTUNE_MAX,
+  MISFORTUNE_DECAY_PER_HONEST_ROLL,
+} from '../services/game/misfortune';
 import { t } from '../services/i18n/use-i18n';
 import type { CharacterEffect } from '../services/ai/context-assembler';
+import type { ItemDrop } from '../services/ai/context-assembler';
+import { createInventoryItem, getEquipmentRollBonus, getArmorDamageReduction } from '../services/game/inventory';
 import type { NewMessage } from '../types/models';
 
 /**
@@ -32,22 +41,73 @@ export function useAI(campaignId: string | null) {
     const characterStore = useCharacterStore.getState();
     let characterDied = false;
 
+    console.log('[applyCharacterEffects] Processing effects:', effects);
+
     for (const effect of effects) {
       try {
+        console.log('[applyCharacterEffects] Applying effect:', effect);
         switch (effect.type) {
           case 'damage': {
-            await characterStore.takeDamage(effect.amount);
+            const character = characterStore.character;
+            const armorReduction = character
+              ? getArmorDamageReduction(character.equippedArmor, character.inventory)
+              : 0;
+            const finalDamage = Math.max(0, effect.amount - armorReduction);
 
-            // Show damage message in chat
+            await characterStore.takeDamage(finalDamage);
+
+            let damageContent = t('combat.takeDamage', { amount: finalDamage.toString() });
+            if (armorReduction > 0 && effect.amount > 0) {
+              damageContent += ` (${t('combat.armorReduced', { reduced: armorReduction.toString(), original: effect.amount.toString() })})`;
+            }
             const damageMessage: NewMessage = {
               campaignId,
               role: 'system',
-              content: t('combat.takeDamage', { amount: effect.amount.toString() }),
+              content: damageContent,
             };
             const savedDamageMessage = await messageRepo.createMessage(damageMessage);
             addMessage(savedDamageMessage);
 
-            // Check if character died
+            const updatedCharacter = characterStore.character;
+            if (updatedCharacter && updatedCharacter.hitPoints <= 0) {
+              characterDied = true;
+            }
+            break;
+          }
+
+          case 'damage_roll': {
+            if (!effect.rollNotation) break;
+            const character = characterStore.character;
+            const armorReduction = character
+              ? getArmorDamageReduction(character.equippedArmor, character.inventory)
+              : 0;
+
+            const result = rollDice(effect.rollNotation);
+            await rollRepo.createRoll({
+              campaignId,
+              notation: result.notation,
+              result: result.total,
+              breakdown: result.breakdown,
+            });
+
+            const rawDamage = result.total;
+            const finalDamage = Math.max(0, rawDamage - armorReduction);
+
+            await characterStore.takeDamage(finalDamage);
+
+            let damageContent = `🎲 ${t('combat.damageRoll', { notation: effect.rollNotation, result: result.breakdown })} → `;
+            damageContent += t('combat.takeDamage', { amount: finalDamage.toString() });
+            if (armorReduction > 0 && rawDamage > 0) {
+              damageContent += ` (${t('combat.armorReduced', { reduced: armorReduction.toString(), original: rawDamage.toString() })})`;
+            }
+            const damageMessage: NewMessage = {
+              campaignId,
+              role: 'system',
+              content: damageContent,
+            };
+            const savedDamageMessage = await messageRepo.createMessage(damageMessage);
+            addMessage(savedDamageMessage);
+
             const updatedCharacter = characterStore.character;
             if (updatedCharacter && updatedCharacter.hitPoints <= 0) {
               characterDied = true;
@@ -68,45 +128,6 @@ export function useAI(campaignId: string | null) {
             addMessage(savedHealMessage);
             break;
           }
-
-          case 'spend_resource': {
-            if (effect.resourceName) {
-              await characterStore.updateResource(effect.resourceName, effect.amount);
-
-              // Show resource spent message in chat
-              const spendMessage: NewMessage = {
-                campaignId,
-                role: 'system',
-                content: t('combat.resourceSpent', {
-                  resource: effect.resourceName,
-                  amount: effect.amount.toString(),
-                  spent: Math.abs(effect.amount).toString()
-                }),
-              };
-              const savedSpendMessage = await messageRepo.createMessage(spendMessage);
-              addMessage(savedSpendMessage);
-            }
-            break;
-          }
-
-          case 'restore_resource': {
-            if (effect.resourceName) {
-              await characterStore.restoreResource(effect.resourceName, effect.amount);
-
-              // Show resource restored message in chat
-              const restoreMessage: NewMessage = {
-                campaignId,
-                role: 'system',
-                content: t('combat.resourceRestored', {
-                  resource: effect.resourceName,
-                  amount: effect.amount.toString()
-                }),
-              };
-              const savedRestoreMessage = await messageRepo.createMessage(restoreMessage);
-              addMessage(savedRestoreMessage);
-            }
-            break;
-          }
         }
       } catch (error) {
         console.error('Failed to apply character effect:', effect, error);
@@ -115,6 +136,80 @@ export function useAI(campaignId: string | null) {
     }
 
     return characterDied;
+  };
+
+  /**
+   * Apply item drops from AI response - add items to character inventory
+   */
+  const applyItemDrops = async (drops: ItemDrop[], campaignId: string): Promise<void> => {
+    if (!drops.length) return;
+
+    const characterStore = useCharacterStore.getState();
+    const character = characterStore.character;
+    if (!character) return;
+
+    const currentInventory = [...(character.inventory || [])];
+
+    for (const drop of drops) {
+      const created = createInventoryItem(drop.itemId, drop.quantity);
+      if (!created) continue;
+
+      const existing = currentInventory.find((i) => i.itemId === drop.itemId);
+      if (existing && existing.type === 'consumable') {
+        existing.quantity += drop.quantity;
+      } else {
+        currentInventory.push(created);
+      }
+
+      const dropMessage: NewMessage = {
+        campaignId,
+        role: 'system',
+        content: `📦 ${t('inventory.itemAcquired', { name: created.name, quantity: drop.quantity.toString() })}`,
+      };
+      const savedDropMessage = await messageRepo.createMessage(dropMessage);
+      addMessage(savedDropMessage);
+    }
+
+    await characterStore.updateInventory(currentInventory);
+  };
+
+  /**
+   * Apply XP change (gain or loss) and show message
+   */
+  const applyXPChange = async (xpChange: number, campaignId: string, campaignSystem: string): Promise<void> => {
+    if (xpChange === 0) return;
+
+    const levelUpResult = await useCharacterStore.getState().updateExperience(xpChange, campaignSystem);
+
+    const isGain = xpChange > 0;
+    const xpContent = isGain
+      ? `✨ ${t('xp.gained', { amount: xpChange.toString() })}`
+      : `⚠️ ${t('xp.lost', { amount: Math.abs(xpChange).toString() })}`;
+    const xpMessage: NewMessage = {
+      campaignId,
+      role: 'system',
+      content: xpContent,
+    };
+    const savedXPMessage = await messageRepo.createMessage(xpMessage);
+    addMessage(savedXPMessage);
+
+    if (levelUpResult.leveledUp) {
+      const levelUpMessage: NewMessage = {
+        campaignId,
+        role: 'system',
+        content: t('xp.levelUp', { level: levelUpResult.newLevel.toString() }),
+      };
+      const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
+      addMessage(savedLevelUpMessage);
+    } else if (levelUpResult.leveledDown) {
+      const levelDownMessage: NewMessage = {
+        campaignId,
+        role: 'system',
+        content: t('xp.levelDown', { level: levelUpResult.newLevel.toString() }),
+      };
+      const savedLevelDownMessage = await messageRepo.createMessage(levelDownMessage);
+      addMessage(savedLevelDownMessage);
+    }
   };
 
   /**
@@ -192,6 +287,12 @@ export function useAI(campaignId: string | null) {
    * Send message or automatically roll dice if input is dice notation
    */
   const sendMessageOrRoll = async (content: string) => {
+    // Block if character is dead (game over)
+    const character = useCharacterStore.getState().character;
+    if (character && character.hitPoints <= 0) {
+      return;
+    }
+
     const trimmedContent = content.trim();
 
     // Check if input is dice notation (e.g., "1d20", "2d6+3")
@@ -224,21 +325,38 @@ export function useAI(campaignId: string | null) {
         breakdown: result.breakdown,
       });
 
+      // Amarra: apply misfortune penalty
+      const character = useCharacterStore.getState().character;
+      const misfortune = character?.misfortune ?? 0;
+      const effectiveResult = applyMisfortuneToRoll(result.total, misfortune);
+
       // Create system message for roll result
+      const rollDisplay =
+        misfortune > 0
+          ? `🎲 Rolled ${result.notation}: ${result.breakdown} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
+          : `🎲 Rolled ${result.notation}: ${result.breakdown}`;
+
       const rollMessage: NewMessage = {
         campaignId,
         role: 'system',
-        content: `🎲 Rolled ${result.notation}: ${result.breakdown}`,
+        content: rollDisplay,
       };
 
       const savedRollMessage = await messageRepo.createMessage(rollMessage);
       addMessage(savedRollMessage);
 
+      // Decay misfortune on honest roll
+      if (character && misfortune > 0) {
+        const newMisfortune = Math.max(0, misfortune - MISFORTUNE_DECAY_PER_HONEST_ROLL);
+        const updated = await characterRepo.updateCharacterMisfortune(character.id, newMisfortune);
+        useCharacterStore.getState().setCharacter(updated);
+      }
+
       // Clear any pending roll
       setPendingRoll(null);
 
-      // Send result to AI for narrative continuation
-      await sendMessageAfterRoll(result.total, result.notation);
+      // Send result to AI for narrative continuation (use effective result)
+      await sendMessageAfterRoll(effectiveResult, result.notation);
     } catch (err) {
       setError((err as Error).message);
       throw err;
@@ -246,7 +364,8 @@ export function useAI(campaignId: string | null) {
   };
 
   /**
-   * Resolve attribute modifiers in dice notation (e.g., "1d20+STR" -> "1d20+2")
+   * Resolve attribute modifiers in dice notation (e.g., "1d20+strength" -> "1d20+2")
+   * Supports ALL preset attribute names and adds equipment roll bonus
    */
   const resolveAttributeModifiers = (notation: string): string => {
     const character = useCharacterStore.getState().character;
@@ -255,34 +374,55 @@ export function useAI(campaignId: string | null) {
     const campaign = getActiveCampaign();
     if (!campaign) return notation;
 
-    // Use the imported getSystemTemplate function
-    const template = getSystemTemplate(campaign.system);
-
-    // Find attribute names in the notation (e.g., +STR, +DEX)
-    const attrRegex = /([+-])([A-Z]{3})/g;
+    const preset = getSheetPreset(campaign.system);
     let resolvedNotation = notation;
 
-    const matches = [...notation.matchAll(attrRegex)];
-    for (const match of matches) {
-      const sign = match[1];
-      const attrAbbr = match[2];
+    // Sort by name length descending so we replace "dexterity" before "dex"
+    const attrsByLength = [...preset.attributes].sort(
+      (a, b) => b.name.length - a.name.length
+    );
 
-      // Find the attribute definition
-      const attrDef = template.attributes.find(
-        (a: any) => a.displayName.toUpperCase() === attrAbbr
-      );
+    for (const attrDef of attrsByLength) {
+      const attrValue = character.attributes[attrDef.name] || 0;
+      const modifier = preset.modifierCalculation
+        ? preset.modifierCalculation(attrValue)
+        : 0;
+      const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
 
-      if (attrDef) {
-        const attrValue = character.attributes[attrDef.name] || 0;
-        const modifier = template.modifierCalculation
-          ? template.modifierCalculation(attrValue)
-          : 0;
+      // Match +attrName or -attrName (case insensitive)
+      // Escape special regex chars in attribute name
+      const escapedName = attrDef.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const nameRegex = new RegExp(`([+-])${escapedName}(?![a-zA-Z0-9_])`, 'gi');
 
-        // Replace the attribute abbreviation with the modifier value
-        resolvedNotation = resolvedNotation.replace(
-          `${sign}${attrAbbr}`,
-          modifier >= 0 ? `+${modifier}` : `${modifier}`
+      resolvedNotation = resolvedNotation.replace(nameRegex, modifierStr);
+
+      // Also match displayName if different from name (e.g. STR vs strength)
+      if (attrDef.displayName.toLowerCase() !== attrDef.name.toLowerCase()) {
+        const escapedDisplay = attrDef.displayName.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          '\\$&'
         );
+        const displayRegex = new RegExp(
+          `([+-])${escapedDisplay}(?![a-zA-Z0-9_])`,
+          'gi'
+        );
+        resolvedNotation = resolvedNotation.replace(displayRegex, modifierStr);
+      }
+    }
+
+    // Add equipment roll bonus (from equipped items with roll_bonus effect)
+    const equipmentBonus = getEquipmentRollBonus(character.inventory);
+    if (equipmentBonus > 0) {
+      // Parse modifier from notation (e.g. "1d20+2" -> add 1 to get "1d20+3")
+      const modMatch = resolvedNotation.match(/([+-])(\d+)$/);
+      if (modMatch) {
+        const sign = modMatch[1];
+        const currentMod = parseInt(modMatch[2], 10) * (sign === '-' ? -1 : 1);
+        const newMod = currentMod + equipmentBonus;
+        const newModStr = newMod >= 0 ? `+${newMod}` : `${newMod}`;
+        resolvedNotation = resolvedNotation.replace(/[+-]\d+$/, newModStr);
+      } else {
+        resolvedNotation = `${resolvedNotation}+${equipmentBonus}`;
       }
     }
 
@@ -293,9 +433,15 @@ export function useAI(campaignId: string | null) {
    * Send action with automatic roll
    * Used when player selects a suggested action that requires a roll
    */
-  const sendActionWithRoll = async (actionText: string, rollNotation: string, dc?: number) => {
+  const sendActionWithRoll = async (actionText: string, rollNotation: string, _dc?: number) => {
     if (!campaignId) {
       throw new Error('No active campaign');
+    }
+
+    // Block if character is dead (game over)
+    const char = useCharacterStore.getState().character;
+    if (char && char.hitPoints <= 0) {
+      return;
     }
 
     const campaign = getActiveCampaign();
@@ -328,49 +474,36 @@ export function useAI(campaignId: string | null) {
         breakdown: result.breakdown,
       });
 
-      // Create system message for roll result
+      // Load character for misfortune
+      let character = useCharacterStore.getState().character;
+      const misfortune = character?.misfortune ?? 0;
+
+      // Amarra: apply misfortune penalty to effective result for AI
+      const effectiveResult = applyMisfortuneToRoll(result.total, misfortune);
+
+      // Create system message for roll result (show misfortune if applied)
+      const rollDisplay =
+        misfortune > 0
+          ? `🎲 Rolled ${result.notation}: ${result.breakdown} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
+          : `🎲 Rolled ${result.notation}: ${result.breakdown}`;
+
       const rollMessage: NewMessage = {
         campaignId,
         role: 'system',
-        content: `🎲 Rolled ${result.notation}: ${result.breakdown}`,
+        content: rollDisplay,
       };
 
       const savedRollMessage = await messageRepo.createMessage(rollMessage);
       addMessage(savedRollMessage);
 
-      // 3. Check for natural 20 (critical success)
-      const isNaturalCrit = result.rolls.length === 1 && result.rolls[0] === 20;
-
-      // 4. Award XP if roll was successful
-      const xpAward = calculateRollXP(result.total, dc, isNaturalCrit);
-      if (xpAward) {
-        // Update character XP
-        const levelUpResult = await useCharacterStore.getState().updateExperience(xpAward.amount, campaign.system);
-
-        // Show XP gain in chat
-        const xpMessage: NewMessage = {
-          campaignId,
-          role: 'system',
-          content: `✨ +${xpAward.amount} XP - ${xpAward.reason}`,
-        };
-
-        const savedXPMessage = await messageRepo.createMessage(xpMessage);
-        addMessage(savedXPMessage);
-
-        // Handle level up
-        if (levelUpResult.leveledUp) {
-          const levelUpMessage: NewMessage = {
-            campaignId,
-            role: 'system',
-            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
-          };
-
-          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
-          addMessage(savedLevelUpMessage);
-        }
+      // Decay misfortune on honest roll
+      if (character && misfortune > 0) {
+        const newMisfortune = Math.max(0, misfortune - MISFORTUNE_DECAY_PER_HONEST_ROLL);
+        character = await characterRepo.updateCharacterMisfortune(character.id, newMisfortune);
+        useCharacterStore.getState().setCharacter(character);
       }
 
-      // 3. Start AI response
+      // 4. Start AI response
       setAIResponding(true);
       setStreamedContent('');
       setError(null);
@@ -380,12 +513,12 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
-      const character = useCharacterStore.getState().character;
+      character = character ?? useCharacterStore.getState().character;
 
       // Include the action and roll in context
       const allMessages = [...messages, savedUserMessage, savedRollMessage];
 
-      // Get AI response with streaming
+      // Get AI response with streaming (use effective result for narrative)
       const response = await gameEngine.getAIResponseAfterRoll(
         {
           campaign,
@@ -395,7 +528,7 @@ export function useAI(campaignId: string | null) {
           facts,
           character,
         },
-        result.total,
+        effectiveResult,
         result.notation,
         (chunk) => {
           appendStreamedContent(chunk);
@@ -427,6 +560,11 @@ export function useAI(campaignId: string | null) {
       let characterDied = false;
       if (response.characterEffects && response.characterEffects.length > 0) {
         characterDied = await applyCharacterEffects(response.characterEffects, campaignId);
+      }
+
+      // Handle item drops
+      if (response.itemDrops && response.itemDrops.length > 0) {
+        await applyItemDrops(response.itemDrops, campaignId);
       }
 
       setAIResponding(false);
@@ -477,6 +615,23 @@ export function useAI(campaignId: string | null) {
       const savedUserMessage = await messageRepo.createMessage(userMessage);
       addMessage(savedUserMessage);
 
+      // Amarra: detect claimed roll in message, increment misfortune
+      const claimedValue = detectClaimedRoll(content);
+      let character = useCharacterStore.getState().character;
+      if (claimedValue !== null && character) {
+        const newMisfortune = Math.min(MISFORTUNE_MAX, (character.misfortune ?? 0) + 1);
+        character = await characterRepo.updateCharacterMisfortune(character.id, newMisfortune);
+        useCharacterStore.getState().setCharacter(character);
+
+        const misfortuneNotice: NewMessage = {
+          campaignId,
+          role: 'system',
+          content: t('misfortune.claimedRollNotice', { stacks: newMisfortune.toString() }),
+        };
+        const savedNotice = await messageRepo.createMessage(misfortuneNotice);
+        addMessage(savedNotice);
+      }
+
       // Start AI response
       setAIResponding(true);
       setStreamedContent('');
@@ -486,7 +641,7 @@ export function useAI(campaignId: string | null) {
       const recap = await recapRepo.getRecapByCampaign(campaignId) || null;
       const entities = await entityRepo.getEntitiesByCampaign(campaignId);
       const facts = await factRepo.getFactsByCampaign(campaignId);
-      const character = useCharacterStore.getState().character;
+      character = character ?? useCharacterStore.getState().character;
 
       // Get all messages including the one we just added
       const allMessages = [...messages, savedUserMessage];
@@ -533,6 +688,11 @@ export function useAI(campaignId: string | null) {
         characterDied = await applyCharacterEffects(response.characterEffects, campaignId);
       }
 
+      // Handle item drops
+      if (response.itemDrops && response.itemDrops.length > 0) {
+        await applyItemDrops(response.itemDrops, campaignId);
+      }
+
       // If character died, generate death message and end campaign
       if (characterDied) {
         setAIResponding(false);
@@ -541,31 +701,9 @@ export function useAI(campaignId: string | null) {
         return;
       }
 
-      // Handle XP award from AI (story progression, milestones, etc.)
-      if (response.xpAward) {
-        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
-
-        // Show XP gain in chat
-        const xpMessage: NewMessage = {
-          campaignId,
-          role: 'system',
-          content: `✨ +${response.xpAward} XP - Story progression`,
-        };
-
-        const savedXPMessage = await messageRepo.createMessage(xpMessage);
-        addMessage(savedXPMessage);
-
-        // Handle level up
-        if (levelUpResult.leveledUp) {
-          const levelUpMessage: NewMessage = {
-            campaignId,
-            role: 'system',
-            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
-          };
-
-          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
-          addMessage(savedLevelUpMessage);
-        }
+      // Handle XP change from AI (gain or loss per action)
+      if (response.xpAward !== null && response.xpAward !== 0) {
+        await applyXPChange(response.xpAward, campaignId, campaign.system);
       }
 
       setAIResponding(false);
@@ -654,6 +792,11 @@ export function useAI(campaignId: string | null) {
         characterDied = await applyCharacterEffects(response.characterEffects, campaignId);
       }
 
+      // Handle item drops
+      if (response.itemDrops && response.itemDrops.length > 0) {
+        await applyItemDrops(response.itemDrops, campaignId);
+      }
+
       // If character died, generate death message and end campaign
       if (characterDied) {
         setAIResponding(false);
@@ -662,31 +805,9 @@ export function useAI(campaignId: string | null) {
         return;
       }
 
-      // Handle XP award from AI (story progression, milestones, etc.)
-      if (response.xpAward) {
-        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
-
-        // Show XP gain in chat
-        const xpMessage: NewMessage = {
-          campaignId,
-          role: 'system',
-          content: `✨ +${response.xpAward} XP - Story progression`,
-        };
-
-        const savedXPMessage = await messageRepo.createMessage(xpMessage);
-        addMessage(savedXPMessage);
-
-        // Handle level up
-        if (levelUpResult.leveledUp) {
-          const levelUpMessage: NewMessage = {
-            campaignId,
-            role: 'system',
-            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
-          };
-
-          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
-          addMessage(savedLevelUpMessage);
-        }
+      // Handle XP change from AI (gain or loss per action)
+      if (response.xpAward !== null && response.xpAward !== 0) {
+        await applyXPChange(response.xpAward, campaignId, campaign.system);
       }
 
       setAIResponding(false);
@@ -774,6 +895,11 @@ export function useAI(campaignId: string | null) {
         characterDied = await applyCharacterEffects(response.characterEffects, campaignId);
       }
 
+      // Handle item drops
+      if (response.itemDrops && response.itemDrops.length > 0) {
+        await applyItemDrops(response.itemDrops, campaignId);
+      }
+
       // If character died, generate death message and end campaign
       if (characterDied) {
         setAIResponding(false);
@@ -782,31 +908,9 @@ export function useAI(campaignId: string | null) {
         return;
       }
 
-      // Handle XP award from AI (story progression, milestones, etc.)
-      if (response.xpAward) {
-        const levelUpResult = await useCharacterStore.getState().updateExperience(response.xpAward, campaign.system);
-
-        // Show XP gain in chat
-        const xpMessage: NewMessage = {
-          campaignId,
-          role: 'system',
-          content: `✨ +${response.xpAward} XP - Story progression`,
-        };
-
-        const savedXPMessage = await messageRepo.createMessage(xpMessage);
-        addMessage(savedXPMessage);
-
-        // Handle level up
-        if (levelUpResult.leveledUp) {
-          const levelUpMessage: NewMessage = {
-            campaignId,
-            role: 'system',
-            content: `🎉 LEVEL UP! You are now Level ${levelUpResult.newLevel}!`,
-          };
-
-          const savedLevelUpMessage = await messageRepo.createMessage(levelUpMessage);
-          addMessage(savedLevelUpMessage);
-        }
+      // Handle XP change from AI (gain or loss per action)
+      if (response.xpAward !== null && response.xpAward !== 0) {
+        await applyXPChange(response.xpAward, campaignId, campaign.system);
       }
 
       setAIResponding(false);

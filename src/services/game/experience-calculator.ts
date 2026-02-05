@@ -1,4 +1,21 @@
-import type { SystemTemplate } from './attribute-templates';
+/**
+ * Experience & Progression Calculator
+ *
+ * PHILOSOPHY: XP and levels are APP-OWNED, not system-specific.
+ *
+ * XP is awarded or penalized via <xp> tags from AI:
+ * - Significant victories
+ * - Quest completion
+ * - Clever solutions
+ *
+ * XP is NOT awarded for:
+ * - Every dice roll (removed calculateRollXP)
+ * - Trivial actions
+ *
+ * This module uses the universal APP_XP_TABLE from sheet-presets.
+ */
+
+import { APP_XP_TABLE } from './sheet-presets';
 
 /**
  * Result of an XP award
@@ -13,105 +30,70 @@ export interface XPAward {
  */
 export interface LevelUpResult {
   leveledUp: boolean;
+  leveledDown: boolean;
   newLevel: number;
   attributePoints: number;
 }
 
 /**
- * Calculate XP award based on roll result and difficulty
- *
- * @param rollResult - The total result of the roll
- * @param dc - The difficulty class (if any)
- * @param isNaturalCrit - Whether a natural 20 was rolled
- * @returns XP award or null if no XP should be awarded
+ * Get character level from XP total
  */
-export function calculateRollXP(
-  rollResult: number,
-  dc: number | undefined,
-  isNaturalCrit: boolean
-): XPAward | null {
-  // No XP for rolls without a difficulty class
-  if (dc === undefined || dc === null) {
-    return null;
+export function getLevelFromXP(xp: number): number {
+  const clamped = Math.max(0, xp);
+  for (let i = APP_XP_TABLE.length - 1; i >= 0; i--) {
+    if (clamped >= APP_XP_TABLE[i]) return i + 1;
   }
-
-  // Failed roll - no XP
-  if (rollResult < dc) {
-    return null;
-  }
-
-  // Base XP based on difficulty
-  let xp = 0;
-  if (dc <= 10) {
-    xp = 10; // Easy task
-  } else if (dc <= 15) {
-    xp = 25; // Medium task
-  } else if (dc <= 20) {
-    xp = 50; // Hard task
-  } else {
-    xp = 75; // Very hard task
-  }
-
-  // Bonus for critical success
-  if (isNaturalCrit) {
-    xp += 25;
-  }
-
-  // Build reason string
-  const difficulty = dc <= 10 ? 'Easy' : dc <= 15 ? 'Medium' : dc <= 20 ? 'Hard' : 'Very Hard';
-  const critBonus = isNaturalCrit ? ' - Critical!' : '';
-
-  return {
-    amount: xp,
-    reason: `${difficulty} success (DC ${dc})${critBonus}`,
-  };
+  return 1;
 }
 
 /**
- * Calculate if character levels up and new level
+ * Calculate level change from XP gain or loss
  *
  * @param currentLevel - Character's current level
  * @param currentXP - Character's current XP
- * @param xpGain - Amount of XP to add
- * @param experienceTable - XP requirements for each level
- * @returns Level-up result with new level and attribute points
+ * @param xpChange - Amount to add (positive) or subtract (negative)
+ * @returns Level-up/down result
  */
 export function calculateLevelUp(
   currentLevel: number,
   currentXP: number,
-  xpGain: number,
-  experienceTable: number[]
+  xpChange: number
 ): LevelUpResult {
-  const newXP = currentXP + xpGain;
-  let newLevel = currentLevel;
-
-  // Check if XP crosses one or more level thresholds
-  while (newLevel < experienceTable.length && newXP >= experienceTable[newLevel]) {
-    newLevel++;
-  }
+  const newXP = Math.max(0, currentXP + xpChange);
+  const newLevel = getLevelFromXP(newXP);
 
   const leveledUp = newLevel > currentLevel;
-  const levelsGained = newLevel - currentLevel;
+  const leveledDown = newLevel < currentLevel;
+  const levelsGained = Math.max(0, newLevel - currentLevel);
 
   return {
     leveledUp,
+    leveledDown,
     newLevel,
-    attributePoints: levelsGained, // 1 point per level gained
+    attributePoints: levelsGained,
   };
+}
+
+/**
+ * Get minimum XP required to be at a given level
+ */
+export function getMinXPForLevel(level: number): number {
+  if (level <= 1) return 0;
+  const idx = Math.min(level - 1, APP_XP_TABLE.length - 1);
+  return APP_XP_TABLE[idx];
 }
 
 /**
  * Get the XP required for the next level
  *
  * @param currentLevel - Character's current level
- * @param experienceTable - XP requirements for each level
  * @returns XP required for next level, or Infinity if at max level
  */
-export function getNextLevelXP(currentLevel: number, experienceTable: number[]): number {
-  if (currentLevel >= experienceTable.length) {
+export function getNextLevelXP(currentLevel: number): number {
+  if (currentLevel >= APP_XP_TABLE.length) {
     return Infinity; // Max level reached
   }
-  return experienceTable[currentLevel];
+  return APP_XP_TABLE[currentLevel];
 }
 
 /**
@@ -119,42 +101,20 @@ export function getNextLevelXP(currentLevel: number, experienceTable: number[]):
  *
  * @param currentXP - Character's current XP
  * @param currentLevel - Character's current level
- * @param experienceTable - XP requirements for each level
  * @returns Progress percentage (0-100)
  */
-export function getXPProgress(
-  currentXP: number,
-  currentLevel: number,
-  experienceTable: number[]
-): number {
-  const nextLevelXP = getNextLevelXP(currentLevel, experienceTable);
+export function getXPProgress(currentXP: number, currentLevel: number): number {
+  const nextLevelXP = getNextLevelXP(currentLevel);
 
   if (nextLevelXP === Infinity) {
     return 100; // Max level reached
   }
 
-  const currentLevelXP = currentLevel > 0 ? experienceTable[currentLevel - 1] : 0;
+  const currentLevelXP = currentLevel > 0 ? APP_XP_TABLE[currentLevel - 1] : 0;
   const xpNeededForLevel = nextLevelXP - currentLevelXP;
   const xpGainedTowardLevel = currentXP - currentLevelXP;
 
   return Math.min(100, Math.max(0, (xpGainedTowardLevel / xpNeededForLevel) * 100));
-}
-
-/**
- * Calculate attribute modifier (for systems like D&D that use modifiers)
- *
- * @param attributeValue - The attribute value
- * @param template - The system template
- * @returns Modifier value or undefined if system doesn't use modifiers
- */
-export function getAttributeModifier(
-  attributeValue: number,
-  template: SystemTemplate
-): number | undefined {
-  if (!template.modifierCalculation) {
-    return undefined;
-  }
-  return template.modifierCalculation(attributeValue);
 }
 
 /**

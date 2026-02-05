@@ -351,4 +351,4 @@ Once all tests pass:
 - [ ] Consider adding Phase 6: Dice Roll Integration (attribute modifiers in rolls)
 - [ ] Consider adding Phase 7: Enhanced AI context (character-aware narration)
 
-**Note:** Moderate progression setting means ~12-20 successful medium rolls (DC 15) to reach Level 2. Adjust experience table in `attribute-templates.ts` if pacing feels too slow/fast.
+**Note:** Moderate progression setting means ~12-20 successful medium rolls (DC 15) to reach Level 2. Adjust experience table in `sheet-presets.ts` (APP_XP_TABLE) if pacing feels too slow/fast.

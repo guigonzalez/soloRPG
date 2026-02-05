@@ -1,7 +1,7 @@
 import { getClaudeClient } from '../ai/claude-client';
 import { getGeminiClient } from '../ai/gemini-client';
 import { buildSystemPrompt } from '../ai/prompt-builder';
-import { assembleContext, parseRollRequest, parseSuggestedActions, parseXPAward, parseCharacterEffects, type CharacterEffect } from '../ai/context-assembler';
+import { assembleContext, parseRollRequest, parseSuggestedActions, parseXPAward, parseCharacterEffects, parseItemDrops, type CharacterEffect, type ItemDrop } from '../ai/context-assembler';
 import { getAIProvider } from '../storage/api-key-storage';
 import { getCurrentLanguage } from '../i18n/use-i18n';
 import type { Campaign, Message, Entity, Fact, Recap, SuggestedAction, Character } from '../../types/models';
@@ -22,6 +22,7 @@ export interface AIResponse {
   suggestedActions: SuggestedAction[];
   xpAward: number | null;
   characterEffects: CharacterEffect[];
+  itemDrops: ItemDrop[];
   usedFallback?: boolean; // True if AI was unavailable and fallback was used
 }
 
@@ -65,6 +66,7 @@ export class GameEngine {
       suggestedActions: [],
       xpAward: null,
       characterEffects: [],
+      itemDrops: [],
       usedFallback: true,
     };
   }
@@ -103,8 +105,15 @@ export class GameEngine {
       // Parse character effects (HP damage/healing, resource spending/restoration)
       const { cleanContent: contentAfterEffects, effects } = parseCharacterEffects(contentAfterXP);
 
+      // Parse item drops
+      const { cleanContent: contentAfterDrops, drops } = parseItemDrops(contentAfterEffects);
+
       // Parse suggested actions
-      const { cleanContent, actions } = parseSuggestedActions(contentAfterEffects);
+      const { cleanContent, actions } = parseSuggestedActions(contentAfterDrops);
+
+      console.log('[GameEngine] Raw AI content:', rawContent);
+      console.log('[GameEngine] Content after parsing:', cleanContent);
+      console.log('[GameEngine] Parsed suggested actions:', actions);
 
       // Check if AI is requesting a roll
       const rollRequest = parseRollRequest(cleanContent);
@@ -115,6 +124,7 @@ export class GameEngine {
         suggestedActions: actions,
         xpAward: xpAmount,
         characterEffects: effects,
+        itemDrops: drops,
       };
     } catch (error) {
       console.error('AI response failed, using fallback:', error);
@@ -185,8 +195,11 @@ Then present the new situation and ask "What do you do?"`;
       // Parse character effects (HP damage/healing, resource spending/restoration)
       const { cleanContent: contentAfterEffects, effects } = parseCharacterEffects(contentAfterXP);
 
+      // Parse item drops
+      const { cleanContent: contentAfterDrops, drops } = parseItemDrops(contentAfterEffects);
+
       // Parse suggested actions
-      const { cleanContent, actions } = parseSuggestedActions(contentAfterEffects);
+      const { cleanContent, actions } = parseSuggestedActions(contentAfterDrops);
 
       // Check if AI is requesting another roll
       const rollRequest = parseRollRequest(cleanContent);
@@ -197,6 +210,7 @@ Then present the new situation and ask "What do you do?"`;
         suggestedActions: actions,
         xpAward: xpAmount,
         characterEffects: effects,
+        itemDrops: drops,
       };
     } catch (error) {
       console.error('AI response after roll failed, using fallback:', error);
@@ -232,6 +246,7 @@ Then present the new situation and ask "What do you do?"`;
         suggestedActions: [],
         xpAward: null,
         characterEffects: [],
+        itemDrops: [],
         usedFallback: true,
       };
     }
