@@ -231,6 +231,12 @@ img {
 }
 
 /* Disabled */
+.retro-button.active {
+  background-color: var(--color-accent);
+  color: var(--color-bg-primary);
+  border-color: var(--color-accent);
+}
+
 .retro-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;

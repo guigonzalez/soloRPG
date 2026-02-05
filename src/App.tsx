@@ -216,10 +216,10 @@ function App() {
       console.log('Loaded entities after extraction:', loadedEntities);
       setEntities(loadedEntities);
 
-      alert(`Memory updated! Extracted:\n- Recap: ${extracted.recap ? 'Yes' : 'No'}\n- Entities: ${extracted.entities.length}\n- Facts: ${extracted.facts.length}`);
+      alert(`${t('recap.memoryUpdated')}\n- ${t('recap.extractedRecap')}: ${extracted.recap ? t('recap.yes') : t('recap.no')}\n- ${t('recap.extractedEntities')}: ${extracted.entities.length}\n- ${t('recap.extractedFacts')}: ${extracted.facts.length}`);
     } catch (err) {
       console.error('Failed to update recap:', err);
-      alert('Failed to update recap: ' + (err as Error).message);
+      alert(t('errors.failedToUpdateRecap') + ': ' + (err as Error).message);
     } finally {
       setIsUpdatingRecap(false);
     }

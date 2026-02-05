@@ -14,7 +14,7 @@ interface CampaignCardProps {
 export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(`Delete campaign "${campaign.title}"? This cannot be undone.`)) {
+    if (confirm(t('campaignCard.deleteConfirm', { title: campaign.title }))) {
       onDelete(campaign);
     }
   };
@@ -26,7 +26,7 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
       alert(t('settings.exportSuccess'));
     } catch (error) {
       console.error('Export failed:', error);
-      alert(`${t('common.error')}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(`${t('common.error')}: ${error instanceof Error ? error.message : t('errors.unknown')}`);
     }
   };
 
@@ -47,11 +47,11 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
       </div>
 
       <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-        <strong>Theme:</strong> {campaign.theme}
+        <strong>{t('campaignCard.theme')}:</strong> {campaign.theme}
       </div>
 
       <div style={{ fontSize: '14px', marginBottom: '12px' }}>
-        <strong>Tone:</strong> {campaign.tone}
+        <strong>{t('campaignCard.tone')}:</strong> {campaign.tone}
       </div>
 
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -67,7 +67,7 @@ export function CampaignCard({ campaign, onSelect, onDelete }: CampaignCardProps
           onClick={handleDelete}
           style={{ fontSize: '12px', padding: '4px 8px', flex: 1 }}
         >
-          Delete
+          {t('common.delete')}
         </button>
       </div>
     </Card>

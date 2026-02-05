@@ -333,8 +333,8 @@ export function useAI(campaignId: string | null) {
       // Create system message for roll result
       const rollDisplay =
         misfortune > 0
-          ? `🎲 Rolled ${result.notation}: ${result.breakdown} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
-          : `🎲 Rolled ${result.notation}: ${result.breakdown}`;
+          ? `🎲 ${t('chat.rollResult', { notation: result.notation, result: result.breakdown })} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
+          : `🎲 ${t('chat.rollResult', { notation: result.notation, result: result.breakdown })}`;
 
       const rollMessage: NewMessage = {
         campaignId,
@@ -484,8 +484,8 @@ export function useAI(campaignId: string | null) {
       // Create system message for roll result (show misfortune if applied)
       const rollDisplay =
         misfortune > 0
-          ? `🎲 Rolled ${result.notation}: ${result.breakdown} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
-          : `🎲 Rolled ${result.notation}: ${result.breakdown}`;
+          ? `🎲 ${t('chat.rollResult', { notation: result.notation, result: result.breakdown })} | ${t('misfortune.effectiveResult', { value: effectiveResult.toString() })}`
+          : `🎲 ${t('chat.rollResult', { notation: result.notation, result: result.breakdown })}`;
 
       const rollMessage: NewMessage = {
         campaignId,

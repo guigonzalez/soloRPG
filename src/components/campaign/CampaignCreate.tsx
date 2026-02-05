@@ -102,7 +102,7 @@ export function CampaignCreate({ onCreateCampaign, onCancel }: CampaignCreatePro
                   minWidth: 'auto',
                 }}
               >
-                {isGenerating ? '⏳ ' + t('campaignCreation.creating') : '✨ Generate with AI'}
+                {isGenerating ? '⏳ ' + t('campaignCreation.creating') : '✨ ' + t('campaignCreation.generateWithAI')}
               </button>
             </div>
             <div style={{

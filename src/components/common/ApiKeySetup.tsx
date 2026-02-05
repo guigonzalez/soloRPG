@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { Card } from './Card';
 import { saveApiKey, validateApiKeyFormat, type AIProvider } from '../../services/storage/api-key-storage';
+import { t } from '../../services/i18n/use-i18n';
 
 interface ApiKeySetupProps {
   onComplete: () => void;
@@ -18,15 +19,15 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
     setError(null);
 
     if (!apiKey.trim()) {
-      setError('Please enter your API key');
+      setError(t('apiKeySetup.enterKey'));
       return;
     }
 
     if (!validateApiKeyFormat(apiKey, provider)) {
       if (provider === 'claude') {
-        setError('Invalid API key format. It should start with "sk-ant-"');
+        setError(t('apiKeySetup.invalidClaudeFormat'));
       } else {
-        setError('Invalid Gemini API key format');
+        setError(t('apiKeySetup.invalidGeminiFormat'));
       }
       return;
     }
@@ -60,19 +61,19 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
       padding: '20px',
     }}>
       <div style={{ maxWidth: '600px', width: '100%' }}>
-        <Card title="Welcome to SoloRPG!">
+        <Card title={t('apiKeySetup.welcome')}>
           <div style={{ marginBottom: '24px', lineHeight: '1.6' }}>
             <p style={{ marginBottom: '12px' }}>
-              To start your adventure, you need to configure your AI provider API key.
+              {t('apiKeySetup.intro')}
             </p>
             <p style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-              Your API key is stored locally in your browser and never sent anywhere except directly to the provider's API.
+              {t('apiKeySetup.introPrivacy')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">AI Provider</label>
+              <label className="form-label">{t('apiKeySetup.aiProvider')}</label>
               <select
                 className="retro-input"
                 value={provider}
@@ -86,7 +87,7 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
 
             <div className="form-group">
               <label className="form-label">
-                {provider === 'claude' ? 'Anthropic API Key' : 'Google AI API Key'}
+                {provider === 'claude' ? t('apiKeySetup.anthropicKey') : t('apiKeySetup.googleKey')}
               </label>
               <input
                 type="password"
@@ -121,13 +122,13 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
               lineHeight: '1.6',
             }}>
               <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                Don't have an API key?
+                {t('apiKeySetup.noKeyTitle')}
               </div>
 
               {provider === 'claude' ? (
                 <>
                   <ol style={{ marginLeft: '20px', marginBottom: '8px' }}>
-                    <li>Go to <a
+                    <li>{t('apiKeySetup.claudeStep1')} <a
                       href="https://console.anthropic.com/"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -135,18 +136,18 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
                     >
                       console.anthropic.com
                     </a></li>
-                    <li>Sign up or log in</li>
-                    <li>Navigate to "API Keys" section</li>
-                    <li>Create a new key and copy it here</li>
+                    <li>{t('apiKeySetup.claudeStep2')}</li>
+                    <li>{t('apiKeySetup.claudeStep3')}</li>
+                    <li>{t('apiKeySetup.claudeStep4')}</li>
                   </ol>
                   <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                    Note: You'll need to add credit to your Anthropic account to use the API.
+                    {t('apiKeySetup.claudeNote')}
                   </div>
                 </>
               ) : (
                 <>
                   <ol style={{ marginLeft: '20px', marginBottom: '8px' }}>
-                    <li>Go to <a
+                    <li>{t('apiKeySetup.geminiStep1')} <a
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -154,12 +155,12 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
                     >
                       aistudio.google.com
                     </a></li>
-                    <li>Sign in with your Google account</li>
-                    <li>Click "Create API Key"</li>
-                    <li>Copy the key and paste it here</li>
+                    <li>{t('apiKeySetup.geminiStep2')}</li>
+                    <li>{t('apiKeySetup.geminiStep3')}</li>
+                    <li>{t('apiKeySetup.geminiStep4')}</li>
                   </ol>
                   <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                    Note: Gemini has a generous free tier available.
+                    {t('apiKeySetup.geminiNote')}
                   </div>
                 </>
               )}
@@ -170,7 +171,7 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
               disabled={isValidating || !apiKey.trim()}
               style={{ width: '100%' }}
             >
-              {isValidating ? 'Saving...' : 'Save and Start Playing'}
+              {isValidating ? t('apiKeySetup.saving') : t('apiKeySetup.saveAndStart')}
             </Button>
 
             <div style={{
@@ -179,7 +180,7 @@ export function ApiKeySetup({ onComplete }: ApiKeySetupProps) {
               textAlign: 'center',
               color: 'var(--color-text-secondary)',
             }}>
-              You can change your API key later in the settings
+              {t('apiKeySetup.changeLater')}
             </div>
           </form>
         </Card>

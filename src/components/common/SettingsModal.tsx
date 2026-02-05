@@ -25,15 +25,15 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     setSuccess(false);
 
     if (!apiKey.trim()) {
-      setError('Please enter your API key');
+      setError(t('apiKeySetup.enterKey'));
       return;
     }
 
     if (!validateApiKeyFormat(apiKey, provider)) {
       if (provider === 'claude') {
-        setError('Invalid API key format. It should start with "sk-ant-"');
+        setError(t('apiKeySetup.invalidClaudeFormat'));
       } else {
-        setError('Invalid Gemini API key format');
+        setError(t('apiKeySetup.invalidGeminiFormat'));
       }
       return;
     }
@@ -53,7 +53,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   };
 
   const handleClear = () => {
-    if (confirm('Are you sure you want to remove your API key? You will need to enter it again to use AI features.')) {
+    if (confirm(t('settings.removeKeyConfirm'))) {
       clearApiKey();
       window.location.reload();
     }
@@ -82,7 +82,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               textTransform: 'uppercase',
               letterSpacing: '1px',
             }}>
-              API Key Configuration
+              {t('settings.apiKeyConfigTitle')}
             </h3>
 
             <div style={{
@@ -92,9 +92,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               backgroundColor: 'var(--color-bg-primary)',
               fontSize: '14px',
             }}>
-              <strong>Provider:</strong> {currentProvider === 'claude' ? 'Claude (Anthropic)' : 'Gemini (Google)'}
+              <strong>{t('settings.providerLabel')}:</strong> {currentProvider === 'claude' ? 'Claude (Anthropic)' : 'Gemini (Google)'}
               <br />
-              <strong>Status:</strong> {currentKey ? '✓ Configured' : '✗ Not configured'}
+              <strong>{t('settings.status')}:</strong> {currentKey ? t('settings.configured') : t('settings.notConfigured')}
               {currentKey && (
                 <div style={{ marginTop: '8px', fontSize: '12px' }}>
                   <button
@@ -109,7 +109,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                       fontFamily: 'var(--font-family)',
                     }}
                   >
-                    {showKey ? 'Hide' : 'Show'} current key
+                    {showKey ? t('settings.hideKey') : t('settings.showKey')}
                   </button>
                   {showKey && (
                     <div style={{
@@ -171,7 +171,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 color: 'var(--color-accent)',
                 fontSize: '14px',
               }}>
-                ✓ API key saved! Reloading...
+                {t('settings.apiKeySaved')}
               </div>
             )}
 
@@ -181,11 +181,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 disabled={!apiKey.trim() || success}
                 style={{ flex: 1 }}
               >
-                Save New Key
+                {t('settings.saveNewKey')}
               </Button>
               {currentKey && (
                 <Button onClick={handleClear} style={{ flex: 1 }}>
-                  Remove Key
+                  {t('settings.removeKey')}
                 </Button>
               )}
             </div>
@@ -202,7 +202,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               textTransform: 'uppercase',
               letterSpacing: '1px',
             }}>
-              General Settings
+              {t('settings.generalSettings')}
             </h3>
 
             <div className="form-group">
@@ -228,11 +228,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 color: 'var(--color-text-secondary)',
                 marginTop: '8px',
               }}>
-                {language === 'pt'
-                  ? 'A narração da IA será gerada neste idioma'
-                  : language === 'es'
-                  ? 'La narración de la IA se generará en este idioma'
-                  : 'AI narration and content will be generated in this language'}
+                {t('settings.languageHint')}
               </div>
             </div>
           </div>
